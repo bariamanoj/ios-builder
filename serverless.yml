@@ -1,0 +1,24 @@
+service: GithubAction
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: eu-central-1
+  stage: live
+  role: arn:aws:iam::059256371462:role/MobiboxSLS-dev-r-IamRoleLambda-XCXA0OHAVPK
+  timeout: 30
+  environment:
+    GITHUB_TOKEN: ${env:GITHUB_TOKEN}
+    GITHUB_OWNER: "bariamanoj"
+    GITHUB_REPO: "ios-builder"
+  vpc:
+    securityGroupIds:
+      - sg-8b8d4de3
+    subnetIds:
+      - subnet-049045deba6345db0
+      - subnet-0c8d69a311a8c1721
+      - subnet-07b553a2ea95f26b4
+
+functions:
+  api:
+    handler: handler.handler

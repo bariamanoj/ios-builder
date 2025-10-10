@@ -1,0 +1,194 @@
+name: iOS Auto Build and Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo_url:
+        description: 'GitHub repository URL'
+        required: true
+        type: string
+      app_name:
+        description: 'App name for App Store'
+        required: true
+        type: string
+      bundle_identifier:
+        description: 'Bundle identifier (e.g., com.company.app)'
+        required: true
+        type: string
+
+jobs:
+  build-and-deploy:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Extract repo info
+      id: repo_info
+      run: |
+        REPO_NAME=$(echo "${{ github.event.inputs.repo_url }}" | sed 's/.*\///')
+        echo "repo_name=$REPO_NAME" >> $GITHUB_OUTPUT
+    
+    - name: Checkout target repository
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ github.event.inputs.repo_url }}
+        token: ${{ secrets.GH_TOKEN }}
+    
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+    
+    - name: Setup Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.0'
+    
+    - name: Install Fastlane
+      run: gem install fastlane
+    
+    - name: Create API Key file
+      run: |
+        mkdir -p ~/.appstoreconnect/private_keys/
+        echo "${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}" > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8
+    
+    - name: Build and Deploy
+      run: |
+        mkdir -p fastlane
+        cat > fastlane/Fastfile << 'EOF'
+        default_platform(:ios)
+        
+        platform :ios do
+          lane :deploy do
+            setup_ci
+            
+            app_store_connect_api_key(
+              key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
+              issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+              key_filepath: "~/.appstoreconnect/private_keys/AuthKey_#{ENV['APP_STORE_CONNECT_API_KEY_KEY_ID']}.p8"
+            )
+            
+            app_name = ENV["APP_NAME"]
+            bundle_id = "com.manzz.contactapp.oct2025"
+            
+            puts "Building: #{app_name} (#{bundle_id})"
+            
+            # Create app on App Store Connect first
+            begin
+              produce(
+                app_name: app_name,
+                language: "en-US",
+                app_version: "1.0",
+                sku: "#{bundle_id.gsub('.', '-')}-#{Time.now.to_i}",
+                app_identifier: bundle_id,
+                skip_itc: false,
+                skip_devcenter: false,
+                team_id: ENV["DEVELOPER_TEAM_ID"]
+              )
+              puts "✅ App created on App Store Connect"
+            rescue => e
+              puts "App creation: #{e.message}"
+            end
+            
+            # Setup certificates and provisioning profiles
+            begin
+              match(
+                type: "appstore", 
+                readonly: false,
+                team_id: ENV["DEVELOPER_TEAM_ID"],
+                app_identifier: bundle_id,
+                force_for_new_certificates: true
+              )
+              puts "✅ Certificates loaded"
+            rescue => e
+              puts "Certificate setup: #{e.message}"
+            end
+            
+            # Stay in current directory (project root)
+            project_root = Dir.pwd
+            
+            # Find workspace or project dynamically
+            workspace_path = Dir.glob("*.xcworkspace").first
+            project_path = Dir.glob("*.xcodeproj").first
+            
+            puts "Current directory: #{Dir.pwd}"
+            puts "Available files: #{Dir.glob("*").join(", ")}"
+            puts "Looking for workspace files: #{Dir.glob("*.xcworkspace")}"
+            puts "Looking for project files: #{Dir.glob("*.xcodeproj")}"
+            
+            if workspace_path
+              puts "Using workspace: #{workspace_path}"
+              scheme_name = File.basename(workspace_path, ".xcworkspace")
+              full_workspace_path = File.join(project_root, workspace_path)
+              
+              # Build and sign archive in one step
+              gym(
+                workspace: full_workspace_path,
+                scheme: scheme_name,
+                clean: true,
+                output_directory: "./build",
+                export_method: "app-store"
+              )
+              
+            elsif project_path
+              puts "Using project: #{project_path}"
+              scheme_name = File.basename(project_path, ".xcodeproj")
+              full_project_path = File.join(project_root, project_path)
+              
+              # Build and sign archive in one step
+              gym(
+                project: full_project_path,
+                scheme: scheme_name,
+                clean: true,
+                output_directory: "./build",
+                export_method: "app-store"
+              )
+            else
+              puts "Searching recursively for project files:"
+              puts Dir.glob("**/*.xcworkspace")
+              puts Dir.glob("**/*.xcodeproj")
+              UI.user_error!("No workspace or project found!")
+            end
+            
+            puts "✅ Archive built successfully!"
+            
+            # Upload to App Store Connect
+            begin
+              upload_to_app_store(
+                submit_for_review: false,
+                automatic_release: false,
+                skip_metadata: true,
+                skip_screenshots: true
+              )
+              puts "✅ Uploaded to App Store Connect!"
+            rescue => e
+              puts "Upload: #{e.message}"
+            end
+          end
+        end
+        EOF
+        
+        fastlane deploy
+      env:
+        MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+        MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+        APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+        DEVELOPER_TEAM_ID: ${{ secrets.DEVELOPER_TEAM_ID }}
+        FASTLANE_SKIP_2FA_UPGRADE: 1
+        FASTLANE_HIDE_CHANGELOG: 1
+        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        FASTLANE_USER: dohrasanket@gmail.com
+        FASTLANE_PASSWORD: Sanket_4392
+        APP_NAME: ${{ github.event.inputs.app_name }}
+        BUNDLE_IDENTIFIER: ${{ github.event.inputs.bundle_identifier }}
+    
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-build-artifacts
+        path: |
+          ./build/*.ipa
+          ./build/*.xcarchive
+        if-no-files-found: warn
