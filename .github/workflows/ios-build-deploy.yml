@@ -40,73 +40,63 @@ jobs:
     - name: Install Fastlane
       run: gem install fastlane
     
-    - name: Build Archive (Skip App Creation)
+    - name: Build iOS Archive
       run: |
-        echo "🚀 iOS Build Pipeline Started"
-        echo "App: ${{ github.event.inputs.app_name }}"
-        echo "Bundle ID: ${{ github.event.inputs.bundle_identifier }}"
-        echo "Repository: ${{ github.event.inputs.repo_url }}"
+        echo "🚀 iOS Build Pipeline"
+        echo "Current directory: $(pwd)"
+        echo "Files in directory:"
+        ls -la
         echo ""
         
-        mkdir -p fastlane
-        cat > fastlane/Fastfile << 'FASTFILE_EOF'
-        default_platform(:ios)
+        # Check for Xcode projects
+        if ls *.xcworkspace 1> /dev/null 2>&1; then
+          WORKSPACE=$(ls *.xcworkspace | head -1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "📱 Found workspace: $WORKSPACE"
+          echo "🎯 Using scheme: $SCHEME"
+          
+          fastlane run build_app \
+            workspace:"$WORKSPACE" \
+            scheme:"$SCHEME" \
+            configuration:"Release" \
+            export_method:"app-store" \
+            skip_package_ipa:false \
+            xcargs:"CODE_SIGNING_ALLOWED=NO"
+            
+        elif ls *.xcodeproj 1> /dev/null 2>&1; then
+          PROJECT=$(ls *.xcodeproj | head -1)
+          SCHEME=$(basename "$PROJECT" .xcodeproj)
+          echo "📱 Found project: $PROJECT"
+          echo "🎯 Using scheme: $SCHEME"
+          
+          fastlane run build_app \
+            project:"$PROJECT" \
+            scheme:"$SCHEME" \
+            configuration:"Release" \
+            export_method:"app-store" \
+            skip_package_ipa:false \
+            xcargs:"CODE_SIGNING_ALLOWED=NO"
+            
+        else
+          echo "❌ No Xcode project found!"
+          echo "Available files:"
+          find . -name "*.xcodeproj" -o -name "*.xcworkspace" | head -10
+          exit 1
+        fi
         
-        platform :ios do
-          desc "Build archive like local setup"
-          lane :build_archive do
-            puts "🔨 Building iOS Archive..."
-            
-            # Find project files
-            workspace_path = Dir.glob("*.xcworkspace").first
-            project_path = Dir.glob("*.xcodeproj").first
-            
-            puts "Workspace: #{workspace_path}" if workspace_path
-            puts "Project: #{project_path}" if project_path
-            
-            if workspace_path
-              puts "📱 Building workspace: #{workspace_path}"
-              build_app(
-                workspace: workspace_path,
-                scheme: File.basename(workspace_path, ".xcworkspace"),
-                configuration: "Release",
-                export_method: "app-store",
-                skip_package_ipa: false,
-                xcargs: "CODE_SIGNING_ALLOWED=NO"
-              )
-            elsif project_path
-              puts "📱 Building project: #{project_path}"
-              build_app(
-                project: project_path,
-                scheme: File.basename(project_path, ".xcodeproj"),
-                configuration: "Release",
-                export_method: "app-store",
-                skip_package_ipa: false,
-                xcargs: "CODE_SIGNING_ALLOWED=NO"
-              )
-            else
-              UI.user_error!("❌ No Xcode project found!")
-            end
-            
-            puts "✅ Archive created successfully!"
-            puts "📦 App: #{ENV['APP_NAME']}"
-            puts "🆔 Bundle: #{ENV['BUNDLE_IDENTIFIER']}"
-          end
-        end
-        FASTFILE_EOF
-        
-        fastlane build_archive
+        echo "✅ Build completed!"
+        echo "📦 App: ${{ github.event.inputs.app_name }}"
+        echo "🆔 Bundle: ${{ github.event.inputs.bundle_identifier }}"
       env:
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
-        APP_NAME: ${{ github.event.inputs.app_name }}
-        BUNDLE_IDENTIFIER: ${{ github.event.inputs.bundle_identifier }}
     
-    - name: Upload Archive Artifacts
+    - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ios-archive
+        name: ios-build-${{ github.event.inputs.app_name }}
         path: |
           *.ipa
           *.xcarchive
+          build/
         if-no-files-found: warn
