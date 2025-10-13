@@ -53,7 +53,7 @@ jobs:
           issuer_id:"${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}" \
           key_filepath:"~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8"
         
-        # Create app
+        # Create app (no team_id for individual accounts)
         fastlane run produce \
           app_name:"${{ github.event.inputs.app_name }}" \
           app_identifier:"${{ github.event.inputs.bundle_identifier }}" \
@@ -61,8 +61,7 @@ jobs:
           app_version:"1.0" \
           sku:"$(echo "${{ github.event.inputs.bundle_identifier }}" | sed 's/\./-/g')-$(date +%s)" \
           skip_itc:false \
-          skip_devcenter:false \
-          team_id:"${{ secrets.DEVELOPER_TEAM_ID }}"
+          skip_devcenter:false
       env:
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
