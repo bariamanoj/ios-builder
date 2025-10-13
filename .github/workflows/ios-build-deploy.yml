@@ -121,7 +121,7 @@ jobs:
             accessed_at: *1
         FASTLANE_PASSWORD: "Sanket_4392"
         FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
-        MATCH_PASSWORD: "newmatch123"
+        MATCH_PASSWORD: "Welcome123"
         GIT_AUTHORIZATION: ${{ secrets.GH_TOKEN }}
 
     - name: Build Signed Archive
