@@ -167,13 +167,13 @@ jobs:
         
         if [ -n "$IPA_FILE" ]; then
           echo "📱 Found IPA: $IPA_FILE"
-          echo "🔑 Using username/password authentication"
+          echo "🔑 Using App Store Connect API Key"
           
-          # Upload using Fastlane with username/password
+          # Upload using App Store Connect API
           fastlane run upload_to_app_store \
             ipa:"$IPA_FILE" \
-            username:"dohrasanket@gmail.com" \
-            team_id:"42FLQUC3A9" \
+            api_key_id:"762ZATSHW9" \
+            issuer_id:"b0a700be-f8fa-481c-bb07-9992a2e2052d" \
             skip_screenshots:true \
             skip_metadata:true \
             skip_app_version_update:true \
@@ -185,8 +185,6 @@ jobs:
           echo "⚠️ No IPA found to upload"
         fi
       env:
-        FASTLANE_PASSWORD: "Sanket_4392"
-        FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
       continue-on-error: true
