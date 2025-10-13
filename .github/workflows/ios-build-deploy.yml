@@ -166,6 +166,7 @@ jobs:
             -configuration Release \
             -archivePath "./build/$SCHEME.xcarchive" \
             -destination "generic/platform=iOS" \
+            -allowProvisioningUpdates \
             DEVELOPMENT_TEAM=42FLQUC3A9 \
             PRODUCT_BUNDLE_IDENTIFIER="com.san.mainAp" \
             archive
@@ -179,6 +180,7 @@ jobs:
             -configuration Release \
             -archivePath "./build/$SCHEME.xcarchive" \
             -destination "generic/platform=iOS" \
+            -allowProvisioningUpdates \
             DEVELOPMENT_TEAM=42FLQUC3A9 \
             PRODUCT_BUNDLE_IDENTIFIER="com.san.mainAp" \
             archive
