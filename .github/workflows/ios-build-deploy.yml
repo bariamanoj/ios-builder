@@ -200,27 +200,11 @@ jobs:
         
         if [ -n "$IPA_FILE" ]; then
           echo "📱 Found IPA: $IPA_FILE"
-          echo "🔑 Using App Store Connect API Key"
+          echo "🔑 Using session token authentication"
           
-          # Setup App Store Connect API Key
-          mkdir -p ~/.appstoreconnect/private_keys/
-          echo "-----BEGIN PRIVATE KEY-----" > ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
-          echo "MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgifib21Mf+cSHv9S6" >> ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
-          echo "AoHkFkd2GFpXZ22AvrgtSP9cmGCgCgYIKoZIzj0DAQehRANCAARePKPxfPXkFAq/" >> ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
-          echo "mcV5YdQ0XkNANofE/30la4lXOleCkJihMPvgt6W6e1sjP+4+aFOv7nL1aRCctFR/" >> ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
-          echo "h/IIUUyP" >> ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
-          echo "-----END PRIVATE KEY-----" >> ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
-          
-          # Setup API key for Fastlane
-          fastlane run app_store_connect_api_key \
-            key_id:762ZATSHW9 \
-            issuer_id:b0a700be-f8fa-481c-bb07-9992a2e2052d \
-            key_filepath:~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
-          
-          # Use pilot action for TestFlight upload (better API key support)
-          fastlane run pilot \
+          # Use upload_to_testflight (like reference project)
+          fastlane run upload_to_testflight \
             ipa:"$IPA_FILE" \
-            skip_submission:true \
             skip_waiting_for_build_processing:true
             
           echo "✅ Upload completed!"
