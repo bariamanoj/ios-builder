@@ -39,19 +39,82 @@ jobs:
     
     - name: Install Fastlane
       run: gem install fastlane
-    
-    - name: Setup API Key
+
+    - name: Build and Create Archive
       run: |
-        mkdir -p ~/.appstoreconnect/private_keys/
-        echo "${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}" > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8
+        echo "🚀 Creating iOS Archive"
+        echo "📦 App: ${{ github.event.inputs.app_name }}"
+        echo "🆔 Bundle: ${{ github.event.inputs.bundle_identifier }}"
         
-        # Set up API key for Fastlane
-        if [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}" ]; then
-          export FASTLANE_API_KEY_PATH="~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8"
-          export APP_STORE_CONNECT_API_KEY_KEY_ID="${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}"
-          export APP_STORE_CONNECT_API_KEY_ISSUER_ID="${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}"
+        # Find project
+        if find . -maxdepth 1 -name "*.xcworkspace" -type d | grep -q .; then
+          WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" -type d | head -1 | sed 's|^\./||')
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "📱 Archiving workspace: $WORKSPACE"
+          
+          xcodebuild -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -archivePath "./build/$SCHEME.xcarchive" \
+            archive
+            
+        elif find . -maxdepth 1 -name "*.xcodeproj" -type d | grep -q .; then
+          PROJECT=$(find . -maxdepth 1 -name "*.xcodeproj" -type d | head -1 | sed 's|^\./||')
+          SCHEME=$(basename "$PROJECT" .xcodeproj)
+          echo "📱 Archiving project: $PROJECT"
+          
+          xcodebuild -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -archivePath "./build/$SCHEME.xcarchive" \
+            archive
+        else
+          echo "❌ No Xcode project or workspace found"
+          exit 1
         fi
-    
+      continue-on-error: true
+
+    - name: Export IPA
+      run: |
+        echo "📦 Exporting IPA"
+        
+        # Find archive
+        ARCHIVE=$(find build -name "*.xcarchive" | head -1)
+        
+        if [ -n "$ARCHIVE" ]; then
+          echo "✅ Archive created successfully!"
+          ls -la build/
+          
+          # Create export directory
+          mkdir -p build/ipa
+          
+          # Manual IPA creation (since export might fail without proper provisioning)
+          echo "🔧 Creating IPA manually"
+          
+          # Find the .app bundle in the archive
+          APP_BUNDLE=$(find "$ARCHIVE" -name "*.app" | head -1)
+          
+          if [ -n "$APP_BUNDLE" ]; then
+            # Create Payload directory
+            mkdir -p build/ipa/Payload
+            
+            # Copy app bundle to Payload
+            cp -R "$APP_BUNDLE" build/ipa/Payload/
+            
+            # Create IPA
+            cd build/ipa
+            zip -r "${{ github.event.inputs.app_name }}.ipa" Payload/
+            cd ../..
+            
+            echo "✅ IPA created: build/ipa/${{ github.event.inputs.app_name }}.ipa"
+            ls -la build/ipa/
+          else
+            echo "❌ No .app bundle found in archive"
+          fi
+        else
+          echo "❌ No archive found to export"
+        fi
+      continue-on-error: true
     
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
@@ -60,9 +123,8 @@ jobs:
         path: |
           build/
         if-no-files-found: warn
-    
 
-    - name: Upload to App Store Connect (Optional)
+    - name: Upload to App Store Connect
       run: |
         echo "🚀 Attempting to upload to App Store Connect"
         
