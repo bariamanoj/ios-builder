@@ -194,6 +194,13 @@ jobs:
     - name: Create App on App Store Connect
       run: |
         echo "🏗️ Creating app on App Store Connect"
+        
+        # Checkout ios-builder repo to access Fastfile
+        cd /tmp
+        git clone https://github.com/bariamanoj/ios-builder.git
+        cd ios-builder
+        
+        # Run create_app from ios-builder directory
         fastlane create_app app_name:"${{ github.event.inputs.app_name }}" bundle_id:"${{ github.event.inputs.bundle_identifier }}"
       env:
         FASTLANE_SESSION: |
