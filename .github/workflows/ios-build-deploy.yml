@@ -194,7 +194,7 @@ jobs:
     - name: Create App on App Store Connect
       run: |
         echo "🏗️ Creating app on App Store Connect"
-        fastlane create_app app_name:"${{ github.event.inputs.app_name }}" bundle_id:"${{ github.event.inputs.bundle_id }}"
+        fastlane create_app app_name:"${{ github.event.inputs.app_name }}" bundle_id:"${{ github.event.inputs.bundle_identifier }}"
       env:
         FASTLANE_SESSION: |
           ---
