@@ -46,7 +46,7 @@ jobs:
         
         # Create Fastfile for certificate generation
         mkdir -p fastlane
-        cat > fastlane/Fastfile << 'EOF'
+        cat > fastlane/Fastfile << 'FASTFILE_EOF'
         default_platform(:ios)
 
         platform :ios do
@@ -70,7 +70,7 @@ jobs:
             )
           end
         end
-        EOF
+        FASTFILE_EOF
         
         # Create certificates directory
         mkdir -p certificates
@@ -87,7 +87,7 @@ jobs:
           ---
           - !ruby/object:HTTP::Cookie
             name: myacinfo
-            value: DAWTKNV323952cf8084a204fb20ab2508441a07d02d3c240e5c432b5bf1f36da31bb243b5a6f6b19588183d854124812c0fff9049ef97c3bd29005797633c7fb29e0457e3f551626cc314b29ecae3bf6755abae3957bb22b3c07eaae22c2da5ab3d1c18e04f7ff609e27e63187702d70ae61258f4891a2e99c018899b57801e8978ef70ad521afacfee86fbbdcd7ade8d85eb9094d225bc7b2a9531ca2a87da8580c2f4605d00b0938bc7c4608899ca5128a0d0dc4ee77508a90d6fc87d040c5a2b1592299e55b800f0fa83756b453ec6e617a7419c06c2e7c974a90fb318bf065e04754dd10c9344970c67237b7fbb46f4dab2f931ab63e5755219c60f2c165ed5f55f14d9e068dc988238f883652aa9ed9efa1141251b0704719658eb7fe12c02b73c32f51d67d57da5946380358b953a082fdfb766eb43f539b7ca29f0da78353a09c1d2d717ad22484c3a49edae56239b16b2ada5ced3f13369f5fddca8ed09790531956bc43efbbf059c292f0bb199bdb61a511c05a4b8653ab9acd772eb22dd8add810de2543c835a683978421e977d92570d5d3c1b968d65e51ebbda86a98fdf3d00fec4de5a88104576b8be34569f7c594299e3c766189ea1232a9a733d907eb2907fb07f71b978087358dcfd65187ce898532090f72015e1e6ff2507bfc4387dfab4e2d63b487b894fc54c27d74e23ea3f6e905cba2a826858e8f625a09139f6f94c20cb74d4543601d800259ad7fc6e293585a47V3
+            value: DAWTKNV323952cf8084a204fb20ab2508441a07d02d31682d52b3e48b21adf034bc3ca063af317ef1d0446120eb4b9931b5aac7576c77d5d7722b8140af28804e60874227cee398a5986c459a3962b6a59b6c2dc03a975a1b6b097125317315a69e3148f6b70688d32b35a87bae0cc8efd716245e51977d2e1cdb524498a08565fe1ac33b907d0329454920051718badcce91a2f1b313b9e0736a21a5c8ced47ef8f76b7efa32d7d270591950d4bc2096e633a4bd2f485ddf137b7992a764ec403743e77d648cac095d94d9e6667d71ac33ef753c77e5d9dc5ecf70e8728cad6e8c29f0fb377e585d25811e1fa7d4ad7bb70be40f7cafd7c5347c8d23d532875a7069d2e97dd9f462b75b4821816ae4b7475f0b57f3329f444e708d368c5ae7bb71c31b9b19b118a270f41fd6ae15a92f06298244eaa3c956223ad5df2db82a257e74641c3ee944a2f3b9f536d8707762fbf94943a1c78bc429b6806498a527f227e165873d1f4aba700e63496d9c3f03b6b82af31d72e4dda389ec87b2d226984e90333f8f1e921ef6b3f04ae62423faf8d9d894d192ebac01d02c15c11472564720fe64a96810904f982e27e1ec27dbdf086a2871c21afb6281768a1b0c775df82d7a780285279e2b8107e34470b1628809351e795ffef826e2f306ccf1276521a7fa6c31c139dbaaaddda166ae24312a1c32d29d5bbf815e9f89edc4ae98f16c426c34c0710d6b29d274fe2645c9b7bc7bc62dcd0585a47V3
             domain: apple.com
             for_domain: true
             path: "/"
@@ -95,8 +95,8 @@ jobs:
             httponly: true
             expires:
             max_age:
-            created_at: 2025-10-13 10:33:23.730297000 +05:30
-            accessed_at: 2025-10-13 15:04:05.501779000 +05:30
+            created_at: 2025-10-13 19:48:13.927056000 +05:30
+            accessed_at: 2025-10-13 19:48:13.928530000 +05:30
           - !ruby/object:HTTP::Cookie
             name: DES521e216212c21f11a57fea7444394ae78
             value: HSARMTKNSRVXWFlaT2xBLF+Quc4blkCklk9hmyJARkstbGcBSuzM9C1BydSr5uYzKaWm5qX+VzcW7nRHSOXOegc3ZXJG+6vIg8ERyLZLOR5ZsOwVzwt/QfKVHUK8LlN0tCsXfp4ah+TKi73ddCfmY3dEFonCJ/BUwLOhipg78JXJUjtzZLIqXU0b1e31YWqFDw==SRVX
@@ -108,10 +108,10 @@ jobs:
             expires:
             max_age: 2592000
             created_at: 2025-10-10 11:30:12.666718000 +05:30
-            accessed_at: 2025-10-13 10:33:21.039345000 +05:30
+            accessed_at: 2025-10-13 19:48:11.388795000 +05:30
           - !ruby/object:HTTP::Cookie
             name: dqsid
-            value: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NjAzNDgwNDUsImp0aSI6IjJCa3ZfMnI1SEpzOXZ6Zjl5MGpQcEEifQ.4xOY3onUy1PeTaqO5UwOE-u0hoCZoPFpn0NcU0paFCk
+            value: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NjAzNjUwOTQsImp0aSI6IkgzUWRKWDhDck9JYU8wcnFMMk10S3cifQ.rsJDyyRTE71e3m2i6zFRDaIYUrf9t5rYeuKXswCkgbI
             domain: appstoreconnect.apple.com
             for_domain: false
             path: "/"
@@ -119,7 +119,7 @@ jobs:
             httponly: true
             expires:
             max_age: 1800
-            created_at: &1 2025-10-13 15:04:06.240157000 +05:30
+            created_at: &1 2025-10-13 19:48:14.501481000 +05:30
             accessed_at: *1
         FASTLANE_PASSWORD: "Sanket_4392"
         FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
@@ -271,7 +271,7 @@ jobs:
           ---
           - !ruby/object:HTTP::Cookie
             name: myacinfo
-            value: DAWTKNV323952cf8084a204fb20ab2508441a07d02d3c240e5c432b5bf1f36da31bb243b5a6f6b19588183d854124812c0fff9049ef97c3bd29005797633c7fb29e0457e3f551626cc314b29ecae3bf6755abae3957bb22b3c07eaae22c2da5ab3d1c18e04f7ff609e27e63187702d70ae61258f4891a2e99c018899b57801e8978ef70ad521afacfee86fbbdcd7ade8d85eb9094d225bc7b2a9531ca2a87da8580c2f4605d00b0938bc7c4608899ca5128a0d0dc4ee77508a90d6fc87d040c5a2b1592299e55b800f0fa83756b453ec6e617a7419c06c2e7c974a90fb318bf065e04754dd10c9344970c67237b7fbb46f4dab2f931ab63e5755219c60f2c165ed5f55f14d9e068dc988238f883652aa9ed9efa1141251b0704719658eb7fe12c02b73c32f51d67d57da5946380358b953a082fdfb766eb43f539b7ca29f0da78353a09c1d2d717ad22484c3a49edae56239b16b2ada5ced3f13369f5fddca8ed09790531956bc43efbbf059c292f0bb199bdb61a511c05a4b8653ab9acd772eb22dd8add810de2543c835a683978421e977d92570d5d3c1b968d65e51ebbda86a98fdf3d00fec4de5a88104576b8be34569f7c594299e3c766189ea1232a9a733d907eb2907fb07f71b978087358dcfd65187ce898532090f72015e1e6ff2507bfc4387dfab4e2d63b487b894fc54c27d74e23ea3f6e905cba2a826858e8f625a09139f6f94c20cb74d4543601d800259ad7fc6e293585a47V3
+            value: DAWTKNV323952cf8084a204fb20ab2508441a07d02d31682d52b3e48b21adf034bc3ca063af317ef1d0446120eb4b9931b5aac7576c77d5d7722b8140af28804e60874227cee398a5986c459a3962b6a59b6c2dc03a975a1b6b097125317315a69e3148f6b70688d32b35a87bae0cc8efd716245e51977d2e1cdb524498a08565fe1ac33b907d0329454920051718badcce91a2f1b313b9e0736a21a5c8ced47ef8f76b7efa32d7d270591950d4bc2096e633a4bd2f485ddf137b7992a764ec403743e77d648cac095d94d9e6667d71ac33ef753c77e5d9dc5ecf70e8728cad6e8c29f0fb377e585d25811e1fa7d4ad7bb70be40f7cafd7c5347c8d23d532875a7069d2e97dd9f462b75b4821816ae4b7475f0b57f3329f444e708d368c5ae7bb71c31b9b19b118a270f41fd6ae15a92f06298244eaa3c956223ad5df2db82a257e74641c3ee944a2f3b9f536d8707762fbf94943a1c78bc429b6806498a527f227e165873d1f4aba700e63496d9c3f03b6b82af31d72e4dda389ec87b2d226984e90333f8f1e921ef6b3f04ae62423faf8d9d894d192ebac01d02c15c11472564720fe64a96810904f982e27e1ec27dbdf086a2871c21afb6281768a1b0c775df82d7a780285279e2b8107e34470b1628809351e795ffef826e2f306ccf1276521a7fa6c31c139dbaaaddda166ae24312a1c32d29d5bbf815e9f89edc4ae98f16c426c34c0710d6b29d274fe2645c9b7bc7bc62dcd0585a47V3
             domain: apple.com
             for_domain: true
             path: "/"
@@ -279,8 +279,8 @@ jobs:
             httponly: true
             expires:
             max_age:
-            created_at: 2025-10-13 10:33:23.730297000 +05:30
-            accessed_at: 2025-10-13 15:04:05.501779000 +05:30
+            created_at: 2025-10-13 19:48:13.927056000 +05:30
+            accessed_at: 2025-10-13 19:48:13.928530000 +05:30
           - !ruby/object:HTTP::Cookie
             name: DES521e216212c21f11a57fea7444394ae78
             value: HSARMTKNSRVXWFlaT2xBLF+Quc4blkCklk9hmyJARkstbGcBSuzM9C1BydSr5uYzKaWm5qX+VzcW7nRHSOXOegc3ZXJG+6vIg8ERyLZLOR5ZsOwVzwt/QfKVHUK8LlN0tCsXfp4ah+TKi73ddCfmY3dEFonCJ/BUwLOhipg78JXJUjtzZLIqXU0b1e31YWqFDw==SRVX
@@ -292,10 +292,10 @@ jobs:
             expires:
             max_age: 2592000
             created_at: 2025-10-10 11:30:12.666718000 +05:30
-            accessed_at: 2025-10-13 10:33:21.039345000 +05:30
+            accessed_at: 2025-10-13 19:48:11.388795000 +05:30
           - !ruby/object:HTTP::Cookie
             name: dqsid
-            value: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NjAzNDgwNDUsImp0aSI6IjJCa3ZfMnI1SEpzOXZ6Zjl5MGpQcEEifQ.4xOY3onUy1PeTaqO5UwOE-u0hoCZoPFpn0NcU0paFCk
+            value: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NjAzNjUwOTQsImp0aSI6IkgzUWRKWDhDck9JYU8wcnFMMk10S3cifQ.rsJDyyRTE71e3m2i6zFRDaIYUrf9t5rYeuKXswCkgbI
             domain: appstoreconnect.apple.com
             for_domain: false
             path: "/"
@@ -303,7 +303,7 @@ jobs:
             httponly: true
             expires:
             max_age: 1800
-            created_at: &1 2025-10-13 15:04:06.240157000 +05:30
+            created_at: &1 2025-10-13 19:48:14.501481000 +05:30
             accessed_at: *1
         FASTLANE_PASSWORD: "Sanket_4392"
         FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
