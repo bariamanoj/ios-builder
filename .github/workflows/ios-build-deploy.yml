@@ -47,6 +47,13 @@ jobs:
     
     - name: Create App on App Store Connect
       run: |
+        # Setup API key first
+        fastlane run app_store_connect_api_key \
+          key_id:"${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}" \
+          issuer_id:"${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}" \
+          key_filepath:"~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8"
+        
+        # Create app
         fastlane run produce \
           app_name:"${{ github.event.inputs.app_name }}" \
           app_identifier:"${{ github.event.inputs.bundle_identifier }}" \
@@ -57,9 +64,6 @@ jobs:
           skip_devcenter:false \
           team_id:"${{ secrets.DEVELOPER_TEAM_ID }}"
       env:
-        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
-        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
-        APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
     
