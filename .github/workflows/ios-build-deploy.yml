@@ -1,6 +1,8 @@
 name: iOS Auto Build and Deploy
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       repo_url:
@@ -24,7 +26,7 @@ jobs:
     - name: Checkout target repository
       uses: actions/checkout@v4
       with:
-        repository: ${{ github.event.inputs.repo_url }}
+        repository: ${{ github.event.inputs.repo_url || 'bariamanoj/NewAppSample1' }}
         token: ${{ secrets.GH_TOKEN }}
     
     - name: Setup Xcode
@@ -158,8 +160,8 @@ jobs:
     - name: Build and Create Archive
       run: |
         echo "🚀 Creating iOS Archive"
-        echo "📦 App: ${{ github.event.inputs.app_name }}"
-        echo "🆔 Bundle: ${{ github.event.inputs.bundle_identifier }}"
+        echo "📦 App: ${{ github.event.inputs.app_name || 'NewAppSample1' }}"
+        echo "🆔 Bundle: ${{ github.event.inputs.bundle_identifier || 'com.san.mainAp' }}"
         
         # Find project
         if find . -maxdepth 1 -name "*.xcworkspace" -type d | grep -q .; then
@@ -224,10 +226,10 @@ jobs:
             
             # Create IPA
             cd build/ipa
-            zip -r "${{ github.event.inputs.app_name }}.ipa" Payload/
+            zip -r "${{ github.event.inputs.app_name || 'NewAppSample1' }}.ipa" Payload/
             cd ../..
             
-            echo "✅ IPA created: build/ipa/${{ github.event.inputs.app_name }}.ipa"
+            echo "✅ IPA created: build/ipa/${{ github.event.inputs.app_name || 'NewAppSample1' }}.ipa"
             ls -la build/ipa/
           else
             echo "❌ No .app bundle found in archive"
@@ -240,7 +242,7 @@ jobs:
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ios-build-${{ github.event.inputs.app_name }}
+        name: ios-build-${{ github.event.inputs.app_name || 'NewAppSample1' }}
         path: |
           build/
         if-no-files-found: warn
