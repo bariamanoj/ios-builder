@@ -42,7 +42,12 @@ jobs:
     
     - name: Build and Deploy
       run: |
-        # Stay in project root, create fastlane directory
+        # Get absolute project root path
+        PROJECT_ROOT=$(pwd)
+        echo "Project root: $PROJECT_ROOT"
+        echo "Files in project root: $(ls -la)"
+        
+        # Create fastlane directory and Fastfile
         mkdir -p fastlane
         cat > fastlane/Fastfile << 'FASTFILE_EOF'
         default_platform(:ios)
@@ -53,66 +58,83 @@ jobs:
             
             app_name = ENV["APP_NAME"]
             bundle_id = ENV["BUNDLE_IDENTIFIER"]
+            project_root = ENV["PROJECT_ROOT"]
             
             puts "Building: #{app_name} (#{bundle_id})"
-            puts "Current directory: #{Dir.pwd}"
-            puts "Available files: #{Dir.glob("*").join(", ")}"
-            puts "Looking for .xcodeproj: #{Dir.glob("*.xcodeproj")}"
-            puts "Looking for .xcworkspace: #{Dir.glob("*.xcworkspace")}"
+            puts "Project root: #{project_root}"
             
-            # Create app on App Store Connect using session
-            begin
-              produce(
-                app_name: app_name,
-                language: "en-US",
-                app_version: "1.0",
-                sku: "#{bundle_id.gsub('.', '-')}-#{Time.now.to_i}",
-                app_identifier: bundle_id,
-                skip_itc: false,
-                skip_devcenter: false,
-                team_id: ENV["DEVELOPER_TEAM_ID"]
-              )
-              puts "✅ App created on App Store Connect"
-            rescue => e
-              puts "App creation: #{e.message}"
-            end
-            
-            # Find project files in current directory
-            workspace_path = Dir.glob("*.xcworkspace").first
-            project_path = Dir.glob("*.xcodeproj").first
-            
-            if workspace_path || project_path
-              build_file = workspace_path || project_path
-              scheme_name = File.basename(build_file, File.extname(build_file))
-              puts "Using: #{build_file}, Scheme: #{scheme_name}"
+            # Change to project root directory
+            Dir.chdir(project_root) do
+              puts "Current directory: #{Dir.pwd}"
+              puts "Available files: #{Dir.glob("*").join(", ")}"
+              puts "Looking for .xcodeproj: #{Dir.glob("*.xcodeproj")}"
+              puts "Looking for .xcworkspace: #{Dir.glob("*.xcworkspace")}"
               
-              # Build unsigned archive for demo
-              build_app(
-                workspace: workspace_path,
-                project: project_path,
-                scheme: scheme_name,
-                clean: true,
-                configuration: "Release",
-                skip_package_ipa: true,
-                xcargs: "CODE_SIGNING_ALLOWED=NO"
-              )
+              # Create app on App Store Connect using API key
+              begin
+                app_store_connect_api_key(
+                  key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
+                  issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+                  key_filepath: "~/.appstoreconnect/private_keys/AuthKey_#{ENV['APP_STORE_CONNECT_API_KEY_KEY_ID']}.p8"
+                )
+                
+                produce(
+                  app_name: app_name,
+                  language: "en-US",
+                  app_version: "1.0",
+                  sku: "#{bundle_id.gsub('.', '-')}-#{Time.now.to_i}",
+                  app_identifier: bundle_id,
+                  skip_itc: false,
+                  skip_devcenter: false,
+                  team_id: ENV["DEVELOPER_TEAM_ID"]
+                )
+                puts "✅ App created on App Store Connect"
+              rescue => e
+                puts "App creation: #{e.message}"
+              end
               
-              puts "✅ Build completed (unsigned for demo)"
-            else
-              UI.user_error!("No Xcode project found!")
+              # Find project files
+              workspace_path = Dir.glob("*.xcworkspace").first
+              project_path = Dir.glob("*.xcodeproj").first
+              
+              if workspace_path || project_path
+                build_file = workspace_path || project_path
+                scheme_name = File.basename(build_file, File.extname(build_file))
+                puts "Using: #{build_file}, Scheme: #{scheme_name}"
+                
+                # Build unsigned archive for demo
+                build_app(
+                  workspace: workspace_path,
+                  project: project_path,
+                  scheme: scheme_name,
+                  clean: true,
+                  configuration: "Release",
+                  skip_package_ipa: true,
+                  xcargs: "CODE_SIGNING_ALLOWED=NO"
+                )
+                
+                puts "✅ Build completed (unsigned for demo)"
+              else
+                UI.user_error!("No Xcode project found!")
+              end
             end
           end
         end
         FASTFILE_EOF
         
-        # Run fastlane from project root
+        # Create API key file
+        mkdir -p ~/.appstoreconnect/private_keys/
+        echo "$APP_STORE_CONNECT_API_KEY_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_API_KEY_KEY_ID.p8
+        
+        # Run fastlane
         fastlane deploy
       env:
+        PROJECT_ROOT: ${{ github.workspace }}
+        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+        APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         DEVELOPER_TEAM_ID: ${{ secrets.DEVELOPER_TEAM_ID }}
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
-        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
-        FASTLANE_USER: dohrasanket@gmail.com
-        FASTLANE_PASSWORD: Sanket_4392
         APP_NAME: ${{ github.event.inputs.app_name }}
         BUNDLE_IDENTIFIER: ${{ github.event.inputs.bundle_identifier }}
