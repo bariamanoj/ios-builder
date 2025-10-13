@@ -42,6 +42,7 @@ jobs:
     
     - name: Build and Deploy
       run: |
+        # Stay in project root, create fastlane directory
         mkdir -p fastlane
         cat > fastlane/Fastfile << 'FASTFILE_EOF'
         default_platform(:ios)
@@ -56,6 +57,8 @@ jobs:
             puts "Building: #{app_name} (#{bundle_id})"
             puts "Current directory: #{Dir.pwd}"
             puts "Available files: #{Dir.glob("*").join(", ")}"
+            puts "Looking for .xcodeproj: #{Dir.glob("*.xcodeproj")}"
+            puts "Looking for .xcworkspace: #{Dir.glob("*.xcworkspace")}"
             
             # Create app on App Store Connect using session
             begin
@@ -74,7 +77,7 @@ jobs:
               puts "App creation: #{e.message}"
             end
             
-            # Find project
+            # Find project files in current directory
             workspace_path = Dir.glob("*.xcworkspace").first
             project_path = Dir.glob("*.xcodeproj").first
             
@@ -102,6 +105,7 @@ jobs:
         end
         FASTFILE_EOF
         
+        # Run fastlane from project root
         fastlane deploy
       env:
         DEVELOPER_TEAM_ID: ${{ secrets.DEVELOPER_TEAM_ID }}
