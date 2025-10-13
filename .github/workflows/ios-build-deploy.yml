@@ -21,12 +21,6 @@ jobs:
     runs-on: macos-latest
     
     steps:
-    - name: Extract repo info
-      id: repo_info
-      run: |
-        REPO_NAME=$(echo "${{ github.event.inputs.repo_url }}" | sed 's/.*\///')
-        echo "repo_name=$REPO_NAME" >> $GITHUB_OUTPUT
-    
     - name: Checkout target repository
       uses: actions/checkout@v4
       with:
@@ -54,7 +48,7 @@ jobs:
     - name: Build and Deploy
       run: |
         mkdir -p fastlane
-        cat > fastlane/Fastfile << 'EOF'
+        cat > fastlane/Fastfile << 'FASTFILE_EOF'
         default_platform(:ios)
         
         platform :ios do
@@ -68,11 +62,13 @@ jobs:
             )
             
             app_name = ENV["APP_NAME"]
-            bundle_id = "com.manzz.contactapp.oct2025"
+            bundle_id = ENV["BUNDLE_IDENTIFIER"]
             
             puts "Building: #{app_name} (#{bundle_id})"
+            puts "Current directory: #{Dir.pwd}"
+            puts "Available files: #{Dir.glob("*").join(", ")}"
             
-            # Create app on App Store Connect first
+            # Create app on App Store Connect only
             begin
               produce(
                 app_name: app_name,
@@ -89,106 +85,41 @@ jobs:
               puts "App creation: #{e.message}"
             end
             
-            # Setup certificates and provisioning profiles
-            begin
-              match(
-                type: "appstore", 
-                readonly: false,
-                team_id: ENV["DEVELOPER_TEAM_ID"],
-                app_identifier: bundle_id,
-                force_for_new_certificates: true
-              )
-              puts "✅ Certificates loaded"
-            rescue => e
-              puts "Certificate setup: #{e.message}"
-            end
-            
-            # Stay in current directory (project root)
-            project_root = Dir.pwd
-            
-            # Find workspace or project dynamically
+            # Find project
             workspace_path = Dir.glob("*.xcworkspace").first
             project_path = Dir.glob("*.xcodeproj").first
             
-            puts "Current directory: #{Dir.pwd}"
-            puts "Available files: #{Dir.glob("*").join(", ")}"
-            puts "Looking for workspace files: #{Dir.glob("*.xcworkspace")}"
-            puts "Looking for project files: #{Dir.glob("*.xcodeproj")}"
-            
-            if workspace_path
-              puts "Using workspace: #{workspace_path}"
-              scheme_name = File.basename(workspace_path, ".xcworkspace")
-              full_workspace_path = File.join(project_root, workspace_path)
+            if workspace_path || project_path
+              build_file = workspace_path || project_path
+              scheme_name = File.basename(build_file, File.extname(build_file))
+              puts "Using: #{build_file}, Scheme: #{scheme_name}"
               
-              # Build and sign archive in one step
-              gym(
-                workspace: full_workspace_path,
+              # Build unsigned archive for demo
+              build_app(
+                workspace: workspace_path,
+                project: project_path,
                 scheme: scheme_name,
                 clean: true,
-                output_directory: "./build",
-                export_method: "app-store"
+                configuration: "Release",
+                skip_package_ipa: true,
+                xcargs: "CODE_SIGNING_ALLOWED=NO"
               )
               
-            elsif project_path
-              puts "Using project: #{project_path}"
-              scheme_name = File.basename(project_path, ".xcodeproj")
-              full_project_path = File.join(project_root, project_path)
-              
-              # Build and sign archive in one step
-              gym(
-                project: full_project_path,
-                scheme: scheme_name,
-                clean: true,
-                output_directory: "./build",
-                export_method: "app-store"
-              )
+              puts "✅ Build completed (unsigned for demo)"
             else
-              puts "Searching recursively for project files:"
-              puts Dir.glob("**/*.xcworkspace")
-              puts Dir.glob("**/*.xcodeproj")
-              UI.user_error!("No workspace or project found!")
-            end
-            
-            puts "✅ Archive built successfully!"
-            
-            # Upload to App Store Connect
-            begin
-              upload_to_app_store(
-                submit_for_review: false,
-                automatic_release: false,
-                skip_metadata: true,
-                skip_screenshots: true
-              )
-              puts "✅ Uploaded to App Store Connect!"
-            rescue => e
-              puts "Upload: #{e.message}"
+              UI.user_error!("No Xcode project found!")
             end
           end
         end
-        EOF
+        FASTFILE_EOF
         
         fastlane deploy
       env:
-        MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-        MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
         APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
         APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
         APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         DEVELOPER_TEAM_ID: ${{ secrets.DEVELOPER_TEAM_ID }}
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
-        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
-        FASTLANE_USER: dohrasanket@gmail.com
-        FASTLANE_PASSWORD: Sanket_4392
         APP_NAME: ${{ github.event.inputs.app_name }}
         BUNDLE_IDENTIFIER: ${{ github.event.inputs.bundle_identifier }}
-    
-    - name: Upload artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: ios-build-artifacts
-        path: |
-          ./build/*.ipa
-          ./build/*.xcarchive
-        if-no-files-found: warn
