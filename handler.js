@@ -1,12 +1,11 @@
-import axios from "axios";
+const axios = require("axios");
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_OWNER = "bariamanoj";
 const GITHUB_REPO = "ios-builder";
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   try {
-    // Handle both API Gateway and direct invocation
     let params;
     if (typeof event === 'string') {
       params = JSON.parse(event);
@@ -20,7 +19,6 @@ export const handler = async (event) => {
     
     console.log(`Triggering build for: ${app_name} (${bundle_identifier})`);
     
-    // Trigger GitHub Actions workflow
     const response = await axios.post(
       `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/ios-build-deploy.yml/dispatches`,
       {
@@ -44,7 +42,6 @@ export const handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         message: "iOS build workflow triggered successfully",
-        workflow_run_id: response.data?.id,
         app_name,
         bundle_identifier
       })

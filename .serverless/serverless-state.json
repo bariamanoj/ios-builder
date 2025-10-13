@@ -12,7 +12,7 @@
       "role": "arn:aws:iam::059256371462:role/MobiboxSLS-dev-r-IamRoleLambda-XCXA0OHAVPK",
       "timeout": 30,
       "environment": {
-        "GITHUB_TOKEN": "your-github-token-here",
+        "GITHUB_TOKEN": "",
         "GITHUB_OWNER": "bariamanoj",
         "GITHUB_REPO": "ios-builder"
       },
@@ -113,16 +113,16 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/GithubAction/live/1759994736396-2025-10-09T07:25:36.396Z/GithubAction.zip"
+                "S3Key": "serverless/GithubAction/live/1760336498190-2025-10-13T06:21:38.190Z/GithubAction.zip"
               },
-              "Handler": "index.main",
+              "Handler": "handler.handler",
               "Runtime": "nodejs18.x",
               "FunctionName": "GithubAction-live-api",
               "MemorySize": 1024,
               "Timeout": 30,
               "Environment": {
                 "Variables": {
-                  "GITHUB_TOKEN": "your-github-token-here",
+                  "GITHUB_TOKEN": "",
                   "GITHUB_OWNER": "bariamanoj",
                   "GITHUB_REPO": "ios-builder"
                 }
@@ -141,14 +141,14 @@
               "ApiLogGroup"
             ]
           },
-          "ApiLambdaVersionBFIKbk38HNOCVhgiRkuWz00vfRhwocbFGdyjYW55oCY": {
+          "ApiLambdaVersionIMG82RolEC82CC65JwWH0yZ5jTpVWZORYei2BuX10": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ApiLambdaFunction"
               },
-              "CodeSha256": "7egSlKQowcR7NhFWeM4V1pNUyPROMOCcTl93IoxlUU4="
+              "CodeSha256": "NdBSOM1AzLiSV53bqPnNzoO7VmUO0D50mNHm4LWBnfQ="
             }
           }
         },
@@ -164,7 +164,7 @@
           "ApiLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ApiLambdaVersionBFIKbk38HNOCVhgiRkuWz00vfRhwocbFGdyjYW55oCY"
+              "Ref": "ApiLambdaVersionIMG82RolEC82CC65JwWH0yZ5jTpVWZORYei2BuX10"
             },
             "Export": {
               "Name": "sls-GithubAction-live-ApiLambdaFunctionQualifiedArn"
@@ -258,7 +258,7 @@
     "pluginsData": {},
     "functions": {
       "api": {
-        "handler": "index.main",
+        "handler": "handler.handler",
         "events": [],
         "name": "GithubAction-live-api",
         "package": {},
@@ -266,7 +266,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "ApiLambdaVersionBFIKbk38HNOCVhgiRkuWz00vfRhwocbFGdyjYW55oCY"
+        "versionLogicalId": "ApiLambdaVersionIMG82RolEC82CC65JwWH0yZ5jTpVWZORYei2BuX10"
       }
     },
     "configValidationMode": "warn",
@@ -282,10 +282,10 @@
     },
     "layers": {},
     "isDashboardMonitoringPreconfigured": false,
-    "artifact": "/Users/manzz/Mobibox/Lambda/ios fastlane/GithubAction/.serverless/GithubAction.zip"
+    "artifact": "/Users/manzz/Mobibox/Lambda/ios fastlane/ios-builder/.serverless/GithubAction.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/GithubAction/live/1759994736396-2025-10-09T07:25:36.396Z",
+    "artifactDirectoryName": "serverless/GithubAction/live/1760336498190-2025-10-13T06:21:38.190Z",
     "artifact": "GithubAction.zip"
   }
 }
