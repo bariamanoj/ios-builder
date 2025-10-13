@@ -40,100 +40,48 @@ jobs:
     - name: Install Fastlane
       run: gem install fastlane
     
-    - name: Build and Deploy
+    - name: Create API Key
       run: |
-        # Create API key file
         mkdir -p ~/.appstoreconnect/private_keys/
-        echo "$APP_STORE_CONNECT_API_KEY_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_API_KEY_KEY_ID.p8
-        
-        # Create fastlane directory and Fastfile
-        mkdir -p fastlane
-        cat > fastlane/Fastfile << 'FASTFILE_EOF'
-        default_platform(:ios)
-        
-        platform :ios do
-          lane :deploy do
-            setup_ci
-            
-            app_name = ENV["APP_NAME"]
-            bundle_id = ENV["BUNDLE_IDENTIFIER"]
-            
-            puts "Building: #{app_name} (#{bundle_id})"
-            puts "Current directory: #{Dir.pwd}"
-            puts "Available files: #{Dir.glob("*").join(", ")}"
-            
-            # Create app on App Store Connect using API key
-            begin
-              app_store_connect_api_key(
-                key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
-                issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
-                key_filepath: "~/.appstoreconnect/private_keys/AuthKey_#{ENV['APP_STORE_CONNECT_API_KEY_KEY_ID']}.p8"
-              )
-              
-              produce(
-                app_name: app_name,
-                language: "en-US",
-                app_version: "1.0",
-                sku: "#{bundle_id.gsub('.', '-')}-#{Time.now.to_i}",
-                app_identifier: bundle_id,
-                skip_itc: false,
-                skip_devcenter: false,
-                team_id: ENV["DEVELOPER_TEAM_ID"]
-              )
-              puts "✅ App created on App Store Connect"
-            rescue => e
-              puts "App creation: #{e.message}"
-            end
-            
-            # Find project files with full paths
-            workspace_path = Dir.glob("*.xcworkspace").first
-            project_path = Dir.glob("*.xcodeproj").first
-            
-            if workspace_path || project_path
-              if workspace_path
-                build_file = File.expand_path(workspace_path)
-                scheme_name = File.basename(workspace_path, ".xcworkspace")
-                puts "Using workspace: #{build_file}, Scheme: #{scheme_name}"
-                
-                build_app(
-                  workspace: build_file,
-                  scheme: scheme_name,
-                  clean: true,
-                  configuration: "Release",
-                  skip_package_ipa: true,
-                  xcargs: "CODE_SIGNING_ALLOWED=NO"
-                )
-              else
-                build_file = File.expand_path(project_path)
-                scheme_name = File.basename(project_path, ".xcodeproj")
-                puts "Using project: #{build_file}, Scheme: #{scheme_name}"
-                
-                build_app(
-                  project: build_file,
-                  scheme: scheme_name,
-                  clean: true,
-                  configuration: "Release",
-                  skip_package_ipa: true,
-                  xcargs: "CODE_SIGNING_ALLOWED=NO"
-                )
-              end
-              
-              puts "✅ Build completed (unsigned for demo)"
-            else
-              UI.user_error!("No Xcode project found!")
-            end
-          end
-        end
-        FASTFILE_EOF
-        
-        # Run fastlane
-        fastlane deploy
+        echo "${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}" > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8
+    
+    - name: Create App on App Store Connect
+      run: |
+        fastlane run produce \
+          app_name:"${{ github.event.inputs.app_name }}" \
+          app_identifier:"${{ github.event.inputs.bundle_identifier }}" \
+          language:"en-US" \
+          app_version:"1.0" \
+          sku:"$(echo "${{ github.event.inputs.bundle_identifier }}" | sed 's/\./-/g')-$(date +%s)" \
+          skip_itc:false \
+          skip_devcenter:false \
+          team_id:"${{ secrets.DEVELOPER_TEAM_ID }}" \
+          api_key_path:"~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8"
       env:
-        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
-        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
-        APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
-        DEVELOPER_TEAM_ID: ${{ secrets.DEVELOPER_TEAM_ID }}
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
-        APP_NAME: ${{ github.event.inputs.app_name }}
-        BUNDLE_IDENTIFIER: ${{ github.event.inputs.bundle_identifier }}
+    
+    - name: Build Project
+      run: |
+        echo "Current directory: $(pwd)"
+        echo "Available files: $(ls -la)"
+        
+        if [ -f "*.xcworkspace" ]; then
+          echo "Found workspace, building..."
+          WORKSPACE=$(ls *.xcworkspace | head -1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          fastlane run build_app workspace:"$WORKSPACE" scheme:"$SCHEME" configuration:"Release" skip_package_ipa:true xcargs:"CODE_SIGNING_ALLOWED=NO"
+        elif [ -f "*.xcodeproj" ]; then
+          echo "Found project, building..."
+          PROJECT=$(ls *.xcodeproj | head -1)
+          SCHEME=$(basename "$PROJECT" .xcodeproj)
+          fastlane run build_app project:"$PROJECT" scheme:"$SCHEME" configuration:"Release" skip_package_ipa:true xcargs:"CODE_SIGNING_ALLOWED=NO"
+        else
+          echo "No Xcode project found!"
+          exit 1
+        fi
+        
+        echo "✅ Build completed successfully!"
+      env:
+        FASTLANE_SKIP_2FA_UPGRADE: 1
+        FASTLANE_HIDE_CHANGELOG: 1
