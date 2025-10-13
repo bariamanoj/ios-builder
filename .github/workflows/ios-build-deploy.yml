@@ -200,12 +200,13 @@ jobs:
         
         if [ -n "$IPA_FILE" ]; then
           echo "📱 Found IPA: $IPA_FILE"
-          echo "🔑 Using Fastlane Session Token"
+          echo "🔑 Using App Store Connect API Key"
           
-          # Upload using Fastlane session with username
+          # Upload using App Store Connect API Key (no 2FA)
           fastlane run upload_to_app_store \
             ipa:"$IPA_FILE" \
-            username:"dohrasanket@gmail.com" \
+            api_key_id:"762ZATSHW9" \
+            issuer_id:"b0a700be-f8fa-481c-bb07-9992a2e2052d" \
             skip_screenshots:true \
             skip_metadata:true \
             skip_app_version_update:true \
