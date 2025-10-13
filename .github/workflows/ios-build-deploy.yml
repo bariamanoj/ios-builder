@@ -58,6 +58,7 @@ jobs:
             -archivePath "./build/$SCHEME.xcarchive" \
             -destination "generic/platform=iOS" \
             -allowProvisioningUpdates \
+            DEVELOPMENT_TEAM=42FLQUC3A9 \
             archive
             
         elif find . -maxdepth 1 -name "*.xcodeproj" -type d | grep -q .; then
@@ -71,6 +72,7 @@ jobs:
             -archivePath "./build/$SCHEME.xcarchive" \
             -destination "generic/platform=iOS" \
             -allowProvisioningUpdates \
+            DEVELOPMENT_TEAM=42FLQUC3A9 \
             archive
         else
           echo "❌ No Xcode project or workspace found"
