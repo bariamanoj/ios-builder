@@ -42,66 +42,19 @@ jobs:
     - name: Install Fastlane
       run: gem install fastlane
 
-    - name: Setup Code Signing
+    - name: Build with Fastlane
       run: |
-        echo "🔐 Setting up code signing with existing certificates"
+        echo "🚀 Building with Fastlane Gym"
         
-        # Create keychain
-        security create-keychain -p "temp123" temp.keychain
-        security default-keychain -s temp.keychain
-        security unlock-keychain -p "temp123" temp.keychain
-        security set-keychain-settings -t 3600 -u temp.keychain
-        
-        # Download and install distribution certificate from Apple Developer
-        curl -o dist_cert.cer "https://developer.apple.com/certificationauthority/AppleWWDRCA.cer"
-        security import dist_cert.cer -k temp.keychain -T /usr/bin/codesign
-        
-        # Create a basic provisioning profile directory
-        mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-        
-        # Set partition list for codesign access
-        security set-key-partition-list -S apple-tool:,apple: -s -k "temp123" temp.keychain
-        
-        echo "✅ Basic signing setup complete"
-
-    - name: Build with Automatic Signing
-      run: |
-        echo "🚀 Building with Automatic Signing"
-        echo "📦 App: ${{ github.event.inputs.app_name || 'NewAppSample1' }}"
-        
-        mkdir -p build
-        
-        # Create export options for app store
-        cat > ExportOptions.plist << EOF
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>teamID</key>
-            <string>42FLQUC3A9</string>
-            <key>uploadBitcode</key>
-            <false/>
-            <key>uploadSymbols</key>
-            <true/>
-            <key>signingStyle</key>
-            <string>automatic</string>
-        </dict>
-        </plist>
-        EOF
-        
-        # Use Fastlane gym for building and signing
         mkdir -p fastlane
         cat > fastlane/Fastfile << 'EOF'
         default_platform(:ios)
 
         platform :ios do
           desc "Build and sign app"
-          lane :build_app do
+          lane :build_and_sign do
             # Build and sign the app
             gym(
-              scheme: ENV["SCHEME_NAME"],
               configuration: "Release",
               export_method: "app-store",
               export_options: {
@@ -110,73 +63,23 @@ jobs:
                 uploadBitcode: false,
                 uploadSymbols: true,
                 signingStyle: "automatic",
-                provisioningProfiles: {
-                  "com.san.mainAp" => "match AppStore com.san.mainAp"
-                }
+                provisioningProfiles: {}
               },
               output_directory: "./build/ipa",
-              output_name: "NewAppSample1.ipa"
+              output_name: "NewAppSample1.ipa",
+              codesigning_identity: "iPhone Distribution",
+              skip_profile_detection: false,
+              export_xcargs: "-allowProvisioningUpdates"
             )
           end
         end
         EOF
         
-        # Find project and set scheme
-        if find . -maxdepth 1 -name "*.xcworkspace" -type d | grep -q .; then
-          WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" -type d | head -1 | sed 's|^\./||')
-          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
-          export SCHEME_NAME="$SCHEME"
-          
-          # Try Fastlane gym first
-          fastlane build_app || {
-            echo "Fastlane failed, trying xcodebuild..."
-            xcodebuild -workspace "$WORKSPACE" \
-              -scheme "$SCHEME" \
-              -configuration Release \
-              -archivePath "./build/$SCHEME.xcarchive" \
-              -destination "generic/platform=iOS" \
-              -allowProvisioningUpdates \
-              DEVELOPMENT_TEAM=42FLQUC3A9 \
-              PRODUCT_BUNDLE_IDENTIFIER="com.san.mainAp" \
-              archive
-              
-            # Export IPA
-            xcodebuild -exportArchive \
-              -archivePath "./build/$SCHEME.xcarchive" \
-              -exportPath "./build/ipa" \
-              -exportOptionsPlist ExportOptions.plist
-          }
-            
-        elif find . -maxdepth 1 -name "*.xcodeproj" -type d | grep -q .; then
-          PROJECT=$(find . -maxdepth 1 -name "*.xcodeproj" -type d | head -1 | sed 's|^\./||')
-          SCHEME=$(basename "$PROJECT" .xcodeproj)
-          export SCHEME_NAME="$SCHEME"
-          
-          # Try Fastlane gym first
-          fastlane build_app || {
-            echo "Fastlane failed, trying xcodebuild..."
-            xcodebuild -project "$PROJECT" \
-              -scheme "$SCHEME" \
-              -configuration Release \
-              -archivePath "./build/$SCHEME.xcarchive" \
-              -destination "generic/platform=iOS" \
-              -allowProvisioningUpdates \
-              DEVELOPMENT_TEAM=42FLQUC3A9 \
-              PRODUCT_BUNDLE_IDENTIFIER="com.san.mainAp" \
-              archive
-              
-            # Export IPA
-            xcodebuild -exportArchive \
-              -archivePath "./build/$SCHEME.xcarchive" \
-              -exportPath "./build/ipa" \
-              -exportOptionsPlist ExportOptions.plist
-          }
-        fi
+        # Run Fastlane
+        fastlane build_and_sign
         
-        # List what we have
         echo "📋 Build results:"
-        ls -la build/ || echo "No build directory"
-        ls -la build/ipa/ || echo "No IPA directory"
+        ls -la build/ipa/ || echo "No IPA created"
         
       env:
         FASTLANE_SESSION: |
