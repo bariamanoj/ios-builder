@@ -69,7 +69,8 @@ jobs:
               output_name: "NewAppSample1.ipa",
               codesigning_identity: "iPhone Distribution",
               skip_profile_detection: false,
-              export_xcargs: "-allowProvisioningUpdates"
+              export_xcargs: "-allowProvisioningUpdates",
+              xcargs: "DEVELOPMENT_TEAM=42FLQUC3A9"
             )
           end
         end
