@@ -98,29 +98,51 @@ jobs:
           # Create export directory
           mkdir -p build/ipa
           
-          # Manual IPA creation (since export might fail without proper provisioning)
-          echo "🔧 Creating IPA manually"
+          # Create export options plist
+          cat > build/ExportOptions.plist << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store</string>
+    <key>uploadBitcode</key>
+    <false/>
+    <key>uploadSymbols</key>
+    <true/>
+    <key>compileBitcode</key>
+    <false/>
+    <key>manageAppVersionAndBuildNumber</key>
+    <false/>
+</dict>
+</plist>
+EOF
           
-          # Find the .app bundle in the archive
-          APP_BUNDLE=$(find "$ARCHIVE" -name "*.app" | head -1)
+          # Export IPA using xcodebuild
+          echo "🔧 Exporting IPA with xcodebuild"
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE" \
+            -exportPath build/ipa \
+            -exportOptionsPlist build/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -allowProvisioningDeviceRegistration || echo "Export failed, trying alternative method"
           
-          if [ -n "$APP_BUNDLE" ]; then
-            # Create Payload directory
-            mkdir -p build/ipa/Payload
+          # If export failed, try manual method as fallback
+          if [ ! -f "build/ipa/*.ipa" ]; then
+            echo "🔄 Trying manual IPA creation as fallback"
+            APP_BUNDLE=$(find "$ARCHIVE" -name "*.app" | head -1)
             
-            # Copy app bundle to Payload
-            cp -R "$APP_BUNDLE" build/ipa/Payload/
-            
-            # Create IPA
-            cd build/ipa
-            zip -r "${{ github.event.inputs.app_name }}.ipa" Payload/
-            cd ../..
-            
-            echo "✅ IPA created: build/ipa/${{ github.event.inputs.app_name }}.ipa"
-            ls -la build/ipa/
-          else
-            echo "❌ No .app bundle found in archive"
+            if [ -n "$APP_BUNDLE" ]; then
+              mkdir -p build/ipa/Payload
+              cp -R "$APP_BUNDLE" build/ipa/Payload/
+              cd build/ipa
+              zip -r "${{ github.event.inputs.app_name }}.ipa" Payload/
+              cd ../..
+            fi
           fi
+          
+          echo "✅ IPA export completed"
+          ls -la build/ipa/
         else
           echo "❌ No archive found to export"
         fi
