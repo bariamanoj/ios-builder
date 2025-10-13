@@ -217,14 +217,11 @@ jobs:
             issuer_id:b0a700be-f8fa-481c-bb07-9992a2e2052d \
             key_filepath:~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
           
-          # Use fresh session token (no 2FA) + API key for upload
-          fastlane run upload_to_app_store \
+          # Use pilot action for TestFlight upload (better API key support)
+          fastlane run pilot \
             ipa:"$IPA_FILE" \
-            skip_screenshots:true \
-            skip_metadata:true \
-            skip_app_version_update:true \
-            force:true \
-            precheck_include_in_app_purchases:false
+            skip_submission:true \
+            skip_waiting_for_build_processing:true
             
           echo "✅ Upload completed!"
         else
