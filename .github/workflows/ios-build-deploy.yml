@@ -47,19 +47,24 @@ jobs:
     
     - name: Create App on App Store Connect
       run: |
-        fastlane run app_store_connect_api_key \
-          key_id:"${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}" \
-          issuer_id:"${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}" \
-          key_filepath:"~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8"
+        echo "🍎 Creating app on App Store Connect"
         
-        fastlane run produce \
-          app_name:"${{ github.event.inputs.app_name }}" \
-          app_identifier:"${{ github.event.inputs.bundle_identifier }}" \
-          language:"en-US" \
-          app_version:"1.0" \
-          sku:"$(echo "${{ github.event.inputs.bundle_identifier }}" | sed 's/\./-/g')-$(date +%s)" \
-          skip_itc:false \
-          skip_devcenter:false
+        # Method 1: Try API Key approach (for organization accounts)
+        if [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}" ]; then
+          echo "📱 Using API Key authentication"
+          fastlane run produce \
+            app_name:"${{ github.event.inputs.app_name }}" \
+            app_identifier:"${{ github.event.inputs.bundle_identifier }}" \
+            language:"en-US" \
+            app_version:"1.0" \
+            sku:"$(echo "${{ github.event.inputs.bundle_identifier }}" | sed 's/\./-/g')-$(date +%s)" \
+            api_key_path:"~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8" \
+            skip_itc:false \
+            skip_devcenter:false
+        else
+          echo "⚠️ No API key found, skipping app creation"
+          echo "💡 App must be created manually on App Store Connect"
+        fi
       env:
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
@@ -150,3 +155,34 @@ jobs:
         path: |
           build/
         if-no-files-found: warn
+    
+    - name: Upload to App Store Connect (Optional)
+      run: |
+        echo "🚀 Attempting to upload to App Store Connect"
+        
+        # Find the IPA file
+        IPA_FILE=$(find build/ipa -name "*.ipa" | head -1)
+        
+        if [ -n "$IPA_FILE" ] && [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}" ]; then
+          echo "📱 Found IPA: $IPA_FILE"
+          echo "🔑 Using API Key authentication"
+          
+          # Upload using Fastlane
+          fastlane run upload_to_app_store \
+            ipa:"$IPA_FILE" \
+            api_key_path:"~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8" \
+            skip_screenshots:true \
+            skip_metadata:true \
+            skip_app_version_update:true \
+            force:true \
+            precheck_include_in_app_purchases:false
+            
+          echo "✅ Upload completed!"
+        else
+          echo "⚠️ Skipping upload - either no IPA found or no API key configured"
+          echo "💡 IPA can be downloaded from artifacts and uploaded manually"
+        fi
+      env:
+        FASTLANE_SKIP_2FA_UPGRADE: 1
+        FASTLANE_HIDE_CHANGELOG: 1
+      continue-on-error: true
