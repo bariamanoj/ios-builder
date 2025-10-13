@@ -14,7 +14,7 @@ exports.handler = async (event) => {
     
     console.log(`Simulating build trigger for: ${app_name} (${bundle_identifier})`);
     console.log(`Repository: ${repo_url}`);
-    console.log(`Workflow would be triggered with fresh session token`);
+    console.log(`Correct repo name should be: bariamanoj/NewAppSample`);
     
     // Simulate successful response
     return {
@@ -23,8 +23,8 @@ exports.handler = async (event) => {
         message: "iOS build workflow would be triggered successfully",
         app_name,
         bundle_identifier,
-        repo_url,
-        note: "Manual trigger required due to GitHub token permissions"
+        repo_url: "bariamanoj/NewAppSample", // Corrected repo name
+        note: "Repository name corrected from NewAppSample1 to NewAppSample"
       })
     };
 
