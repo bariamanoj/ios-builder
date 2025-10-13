@@ -56,27 +56,20 @@ jobs:
       run: |
         echo "🍎 Creating app on App Store Connect"
         
-        if [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}" ]; then
-          echo "📱 Using API Key authentication"
-          
-          # Set up API key environment
-          export APP_STORE_CONNECT_API_KEY_KEY_ID="${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}"
-          export APP_STORE_CONNECT_API_KEY_ISSUER_ID="${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}"
-          export APP_STORE_CONNECT_API_KEY_KEY_FILEPATH="~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8"
-          
-          fastlane run produce \
-            app_name:"${{ github.event.inputs.app_name }}" \
-            app_identifier:"${{ github.event.inputs.bundle_identifier }}" \
-            language:"en-US" \
-            app_version:"1.0" \
-            sku:"$(echo "${{ github.event.inputs.bundle_identifier }}" | sed 's/\./-/g')-$(date +%s)" \
-            skip_itc:false \
-            skip_devcenter:false
-        else
-          echo "⚠️ No API key found, skipping app creation"
-          echo "💡 App must be created manually on App Store Connect"
-        fi
+        # Use username/password authentication for individual accounts
+        fastlane run produce \
+          app_name:"${{ github.event.inputs.app_name }}" \
+          app_identifier:"${{ github.event.inputs.bundle_identifier }}" \
+          language:"en-US" \
+          app_version:"1.0" \
+          sku:"$(echo "${{ github.event.inputs.bundle_identifier }}" | sed 's/\./-/g')-$(date +%s)" \
+          username:"dohrasanket@gmail.com" \
+          team_id:"42FLQUC3A9" \
+          skip_itc:false \
+          skip_devcenter:false
       env:
+        FASTLANE_PASSWORD: "Sanket_4392"
+        FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
       continue-on-error: true
@@ -172,18 +165,15 @@ jobs:
         # Find the IPA file
         IPA_FILE=$(find build/ipa -name "*.ipa" | head -1)
         
-        if [ -n "$IPA_FILE" ] && [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}" ]; then
+        if [ -n "$IPA_FILE" ]; then
           echo "📱 Found IPA: $IPA_FILE"
-          echo "🔑 Using API Key authentication"
+          echo "🔑 Using username/password authentication"
           
-          # Set up API key environment
-          export APP_STORE_CONNECT_API_KEY_KEY_ID="${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}"
-          export APP_STORE_CONNECT_API_KEY_ISSUER_ID="${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}"
-          export APP_STORE_CONNECT_API_KEY_KEY_FILEPATH="~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8"
-          
-          # Upload using Fastlane
+          # Upload using Fastlane with username/password
           fastlane run upload_to_app_store \
             ipa:"$IPA_FILE" \
+            username:"dohrasanket@gmail.com" \
+            team_id:"42FLQUC3A9" \
             skip_screenshots:true \
             skip_metadata:true \
             skip_app_version_update:true \
@@ -192,10 +182,11 @@ jobs:
             
           echo "✅ Upload completed!"
         else
-          echo "⚠️ Skipping upload - either no IPA found or no API key configured"
-          echo "💡 IPA can be downloaded from artifacts and uploaded manually"
+          echo "⚠️ No IPA found to upload"
         fi
       env:
+        FASTLANE_PASSWORD: "Sanket_4392"
+        FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
       continue-on-error: true
