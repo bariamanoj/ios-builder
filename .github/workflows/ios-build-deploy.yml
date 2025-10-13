@@ -42,87 +42,83 @@ jobs:
     - name: Install Fastlane
       run: gem install fastlane
 
-    - name: Build with Fastlane
+    - name: Build Archive with xcodebuild
       run: |
-        echo "🚀 Building with Fastlane Gym"
+        echo "🚀 Building Archive with xcodebuild"
         
-        mkdir -p fastlane
-        cat > fastlane/Fastfile << 'EOF'
-        default_platform(:ios)
+        mkdir -p build
+        
+        if find . -maxdepth 1 -name "*.xcworkspace" -type d | grep -q .; then
+          WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" -type d | head -1 | sed 's|^\./||')
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          
+          xcodebuild -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -archivePath "./build/$SCHEME.xcarchive" \
+            -destination "generic/platform=iOS" \
+            -allowProvisioningUpdates \
+            DEVELOPMENT_TEAM=42FLQUC3A9 \
+            PRODUCT_BUNDLE_IDENTIFIER="com.san.mainAp" \
+            CODE_SIGN_STYLE=Automatic \
+            archive
+            
+        elif find . -maxdepth 1 -name "*.xcodeproj" -type d | grep -q .; then
+          PROJECT=$(find . -maxdepth 1 -name "*.xcodeproj" -type d | head -1 | sed 's|^\./||')
+          SCHEME=$(basename "$PROJECT" .xcodeproj)
+          
+          xcodebuild -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -archivePath "./build/$SCHEME.xcarchive" \
+            -destination "generic/platform=iOS" \
+            -allowProvisioningUpdates \
+            DEVELOPMENT_TEAM=42FLQUC3A9 \
+            PRODUCT_BUNDLE_IDENTIFIER="com.san.mainAp" \
+            CODE_SIGN_STYLE=Automatic \
+            archive
+        fi
+        
+        echo "📋 Archive results:"
+        ls -la build/ || echo "No build directory"
 
-        platform :ios do
-          desc "Build and sign app"
-          lane :build_and_sign do
-            # Build and sign the app
-            gym(
-              configuration: "Release",
-              export_method: "app-store",
-              export_options: {
-                method: "app-store",
-                teamID: "42FLQUC3A9",
-                uploadBitcode: false,
-                uploadSymbols: true,
-                signingStyle: "automatic",
-                provisioningProfiles: {}
-              },
-              output_directory: "./build/ipa",
-              output_name: "NewAppSample1.ipa",
-              codesigning_identity: "iPhone Distribution",
-              skip_profile_detection: false,
-              export_xcargs: "-allowProvisioningUpdates",
-              xcargs: "DEVELOPMENT_TEAM=42FLQUC3A9"
-            )
-          end
-        end
+    - name: Export IPA
+      run: |
+        echo "📦 Exporting IPA"
+        
+        ARCHIVE=$(find build -name "*.xcarchive" | head -1)
+        
+        if [ -n "$ARCHIVE" ]; then
+          cat > ExportOptions.plist << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>42FLQUC3A9</string>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>signingStyle</key>
+            <string>automatic</string>
+        </dict>
+        </plist>
         EOF
-        
-        # Run Fastlane
-        fastlane build_and_sign
-        
-        echo "📋 Build results:"
-        ls -la build/ipa/ || echo "No IPA created"
-        
-      env:
-        FASTLANE_SESSION: |
-          ---
-          - !ruby/object:HTTP::Cookie
-            name: myacinfo
-            value: DAWTKNV323952cf8084a204fb20ab2508441a07d02d31682d52b3e48b21adf034bc3ca063af317ef1d0446120eb4b9931b5aac7576c77d5d7722b8140af28804e60874227cee398a5986c459a3962b6a59b6c2dc03a975a1b6b097125317315a69e3148f6b70688d32b35a87bae0cc8efd716245e51977d2e1cdb524498a08565fe1ac33b907d0329454920051718badcce91a2f1b313b9e0736a21a5c8ced47ef8f76b7efa32d7d270591950d4bc2096e633a4bd2f485ddf137b7992a764ec403743e77d648cac095d94d9e6667d71ac33ef753c77e5d9dc5ecf70e8728cad6e8c29f0fb377e585d25811e1fa7d4ad7bb70be40f7cafd7c5347c8d23d532875a7069d2e97dd9f462b75b4821816ae4b7475f0b57f3329f444e708d368c5ae7bb71c31b9b19b118a270f41fd6ae15a92f06298244eaa3c956223ad5df2db82a257e74641c3ee944a2f3b9f536d8707762fbf94943a1c78bc429b6806498a527f227e165873d1f4aba700e63496d9c3f03b6b82af31d72e4dda389ec87b2d226984e90333f8f1e921ef6b3f04ae62423faf8d9d894d192ebac01d02c15c11472564720fe64a96810904f982e27e1ec27dbdf086a2871c21afb6281768a1b0c775df82d7a780285279e2b8107e34470b1628809351e795ffef826e2f306ccf1276521a7fa6c31c139dbaaaddda166ae24312a1c32d29d5bbf815e9f89edc4ae98f16c426c34c0710d6b29d274fe2645c9b7bc7bc62dcd0585a47V3
-            domain: apple.com
-            for_domain: true
-            path: "/"
-            secure: true
-            httponly: true
-            expires:
-            max_age:
-            created_at: 2025-10-13 19:48:13.927056000 +05:30
-            accessed_at: 2025-10-13 19:51:41.272398000 +05:30
-          - !ruby/object:HTTP::Cookie
-            name: DES521e216212c21f11a57fea7444394ae78
-            value: HSARMTKNSRVXWFlaT2xBLF+Quc4blkCklk9hmyJARkstbGcBSuzM9C1BydSr5uYzKaWm5qX+VzcW7nRHSOXOegc3ZXJG+6vIg8ERyLZLOR5ZsOwVzwt/QfKVHUK8LlN0tCsXfp4ah+TKi73ddCfmY3dEFonCJ/BUwLOhipg78JXJUjtzZLIqXU0b1e31YWqFDw==SRVX
-            domain: idmsa.apple.com
-            for_domain: true
-            path: "/"
-            secure: true
-            httponly: true
-            expires:
-            max_age: 2592000
-            created_at: 2025-10-10 11:30:12.666718000 +05:30
-            accessed_at: 2025-10-13 19:48:11.388795000 +05:30
-          - !ruby/object:HTTP::Cookie
-            name: dqsid
-            value: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NjAzNjUwOTQsImp0aSI6IkgzUWRKWDhDck9JYU8wcnFMMk10S3cifQ.rsJDyyRTE71e3m2i6zFRDaIYUrf9t5rYeuKXswCkgbI
-            domain: appstoreconnect.apple.com
-            for_domain: false
-            path: "/"
-            secure: true
-            httponly: true
-            expires:
-            max_age: 1800
-            created_at: &1 2025-10-13 19:51:42.479986000 +05:30
-            accessed_at: *1
-        FASTLANE_PASSWORD: "Sanket_4392"
-        FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
+          
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE" \
+            -exportPath "./build/ipa" \
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates
+          
+          echo "📋 IPA results:"
+          ls -la build/ipa/ || echo "No IPA created"
+        else
+          echo "❌ No archive found"
+        fi
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
