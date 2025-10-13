@@ -204,14 +204,12 @@ jobs:
           
           # Setup App Store Connect API Key
           mkdir -p ~/.appstoreconnect/private_keys/
-          cat > ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8 << 'EOF'
------BEGIN PRIVATE KEY-----
-MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgifib21Mf+cSHv9S6
-AoHkFkd2GFpXZ22AvrgtSP9cmGCgCgYIKoZIzj0DAQehRANCAARePKPxfPXkFAq/
-mcV5YdQ0XkNANofE/30la4lXOleCkJihMPvgt6W6e1sjP+4+aFOv7nL1aRCctFR/
-h/IIUUyP
------END PRIVATE KEY-----
-EOF
+          echo "-----BEGIN PRIVATE KEY-----" > ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
+          echo "MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgifib21Mf+cSHv9S6" >> ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
+          echo "AoHkFkd2GFpXZ22AvrgtSP9cmGCgCgYIKoZIzj0DAQehRANCAARePKPxfPXkFAq/" >> ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
+          echo "mcV5YdQ0XkNANofE/30la4lXOleCkJihMPvgt6W6e1sjP+4+aFOv7nL1aRCctFR/" >> ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
+          echo "h/IIUUyP" >> ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
+          echo "-----END PRIVATE KEY-----" >> ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
           
           # Setup API key for Fastlane
           fastlane run app_store_connect_api_key \
