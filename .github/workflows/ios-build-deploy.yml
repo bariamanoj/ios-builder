@@ -48,9 +48,9 @@ jobs:
         ls -la
         echo ""
         
-        # Check for Xcode projects
-        if ls *.xcworkspace 1> /dev/null 2>&1; then
-          WORKSPACE=$(ls *.xcworkspace | head -1)
+        # Check for Xcode projects (directories ending in .xcodeproj)
+        if find . -maxdepth 1 -name "*.xcworkspace" -type d | grep -q .; then
+          WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" -type d | head -1 | sed 's|^\./||')
           SCHEME=$(basename "$WORKSPACE" .xcworkspace)
           echo "📱 Found workspace: $WORKSPACE"
           echo "🎯 Using scheme: $SCHEME"
@@ -63,8 +63,8 @@ jobs:
             skip_package_ipa:false \
             xcargs:"CODE_SIGNING_ALLOWED=NO"
             
-        elif ls *.xcodeproj 1> /dev/null 2>&1; then
-          PROJECT=$(ls *.xcodeproj | head -1)
+        elif find . -maxdepth 1 -name "*.xcodeproj" -type d | grep -q .; then
+          PROJECT=$(find . -maxdepth 1 -name "*.xcodeproj" -type d | head -1 | sed 's|^\./||')
           SCHEME=$(basename "$PROJECT" .xcodeproj)
           echo "📱 Found project: $PROJECT"
           echo "🎯 Using scheme: $SCHEME"
@@ -79,8 +79,10 @@ jobs:
             
         else
           echo "❌ No Xcode project found!"
-          echo "Available files:"
-          find . -name "*.xcodeproj" -o -name "*.xcworkspace" | head -10
+          echo "Available .xcodeproj directories:"
+          find . -name "*.xcodeproj" -type d
+          echo "Available .xcworkspace directories:"
+          find . -name "*.xcworkspace" -type d
           exit 1
         fi
         
