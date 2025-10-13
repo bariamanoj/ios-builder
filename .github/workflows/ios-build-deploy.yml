@@ -205,6 +205,7 @@ jobs:
           # Use upload_to_testflight (like reference project)
           fastlane run upload_to_testflight \
             ipa:"$IPA_FILE" \
+            username:"dohrasanket@gmail.com" \
             skip_waiting_for_build_processing:true
             
           echo "✅ Upload completed!"
