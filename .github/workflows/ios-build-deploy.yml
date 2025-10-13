@@ -55,9 +55,11 @@ jobs:
           sku:"$(echo "${{ github.event.inputs.bundle_identifier }}" | sed 's/\./-/g')-$(date +%s)" \
           skip_itc:false \
           skip_devcenter:false \
-          team_id:"${{ secrets.DEVELOPER_TEAM_ID }}" \
-          api_key_path:"~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8"
+          team_id:"${{ secrets.DEVELOPER_TEAM_ID }}"
       env:
+        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+        APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
     
@@ -66,15 +68,17 @@ jobs:
         echo "Current directory: $(pwd)"
         echo "Available files: $(ls -la)"
         
-        if [ -f "*.xcworkspace" ]; then
+        if ls *.xcworkspace 1> /dev/null 2>&1; then
           echo "Found workspace, building..."
           WORKSPACE=$(ls *.xcworkspace | head -1)
           SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "Building workspace: $WORKSPACE with scheme: $SCHEME"
           fastlane run build_app workspace:"$WORKSPACE" scheme:"$SCHEME" configuration:"Release" skip_package_ipa:true xcargs:"CODE_SIGNING_ALLOWED=NO"
-        elif [ -f "*.xcodeproj" ]; then
+        elif ls *.xcodeproj 1> /dev/null 2>&1; then
           echo "Found project, building..."
           PROJECT=$(ls *.xcodeproj | head -1)
           SCHEME=$(basename "$PROJECT" .xcodeproj)
+          echo "Building project: $PROJECT with scheme: $SCHEME"
           fastlane run build_app project:"$PROJECT" scheme:"$SCHEME" configuration:"Release" skip_package_ipa:true xcargs:"CODE_SIGNING_ALLOWED=NO"
         else
           echo "No Xcode project found!"
