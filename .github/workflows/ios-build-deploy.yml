@@ -220,6 +220,7 @@ jobs:
           # Upload using configured API key
           fastlane run upload_to_app_store \
             ipa:"$IPA_FILE" \
+            username:dohrasanket@gmail.com \
             skip_screenshots:true \
             skip_metadata:true \
             skip_app_version_update:true \
