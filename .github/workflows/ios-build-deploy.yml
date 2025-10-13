@@ -215,9 +215,9 @@ EOF
           
           # Setup API key for Fastlane
           fastlane run app_store_connect_api_key \
-            key_id:"762ZATSHW9" \
-            issuer_id:"b0a700be-f8fa-481c-bb07-9992a2e2052d" \
-            key_filepath:"~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8"
+            key_id:762ZATSHW9 \
+            issuer_id:b0a700be-f8fa-481c-bb07-9992a2e2052d \
+            key_filepath:~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8
           
           # Upload using configured API key
           fastlane run upload_to_app_store \
