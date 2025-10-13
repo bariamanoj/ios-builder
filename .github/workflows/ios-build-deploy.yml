@@ -133,21 +133,25 @@ jobs:
           # Create IPA manually
           mkdir -p build/ipa
           
-          # Extract app from archive
-          cp -r "$ARCHIVE/Products/Applications/"*.app build/ipa/
+          # Extract app bundle from archive
+          find "$ARCHIVE/Products/Applications" -name "*.app" -exec cp -r {} build/ipa/ \;
           
           # Create IPA with proper naming
           cd build/ipa
-          APP_FILE=$(ls *.app | head -1)
+          APP_FILE=$(find . -name "*.app" -type d | head -1 | sed 's|^\./||')
           APP_NAME="${{ github.event.inputs.app_name }}"
           
-          mkdir -p Payload
-          mv "$APP_FILE" Payload/
-          zip -r "$APP_NAME.ipa" Payload/
-          rm -rf Payload/
-          
-          echo "✅ IPA created successfully!"
-          ls -la
+          if [ -n "$APP_FILE" ]; then
+            mkdir -p Payload
+            mv "$APP_FILE" Payload/
+            zip -r "$APP_NAME.ipa" Payload/
+            rm -rf Payload/
+            
+            echo "✅ IPA created successfully!"
+            ls -la *.ipa
+          else
+            echo "❌ No .app bundle found"
+          fi
         else
           echo "❌ No archive found to export"
         fi
