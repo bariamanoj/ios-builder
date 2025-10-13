@@ -56,6 +56,11 @@ jobs:
             -scheme "$SCHEME" \
             -configuration Release \
             -archivePath "./build/$SCHEME.xcarchive" \
+            -destination "generic/platform=iOS" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE="" \
             archive
             
         elif find . -maxdepth 1 -name "*.xcodeproj" -type d | grep -q .; then
@@ -67,6 +72,11 @@ jobs:
             -scheme "$SCHEME" \
             -configuration Release \
             -archivePath "./build/$SCHEME.xcarchive" \
+            -destination "generic/platform=iOS" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE="" \
             archive
         else
           echo "❌ No Xcode project or workspace found"
