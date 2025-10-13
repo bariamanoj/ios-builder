@@ -203,6 +203,10 @@ jobs:
         # Run create_app from ios-builder directory
         fastlane create_app app_name:"${{ github.event.inputs.app_name }}" bundle_id:"${{ github.event.inputs.bundle_identifier }}"
       env:
+        APP_STORE_CONNECT_API_KEY_ID: "762ZATSHW9"
+        APP_STORE_CONNECT_ISSUER_ID: "b0a700be-f8fa-481c-bb07-9992a2e2052d"
+        APP_STORE_CONNECT_API_KEY_PATH: "./AuthKey_762ZATSHW9.p8"
+      env:
         FASTLANE_SESSION: |
           ---
           - !ruby/object:HTTP::Cookie
