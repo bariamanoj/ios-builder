@@ -40,34 +40,43 @@ jobs:
     - name: Install Fastlane
       run: gem install fastlane
     
-    - name: Build Project Only
+    - name: Create API Key
       run: |
-        echo "=== iOS Build Pipeline ==="
-        echo "App Name: ${{ github.event.inputs.app_name }}"
-        echo "Bundle ID: ${{ github.event.inputs.bundle_identifier }}"
-        echo "Repository: ${{ github.event.inputs.repo_url }}"
-        echo ""
-        
-        echo "Current directory: $(pwd)"
-        echo "Available files:"
-        ls -la
-        echo ""
-        
-        # Create minimal Fastfile for build only
+        mkdir -p ~/.appstoreconnect/private_keys/
+        echo "${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}" > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}.p8
+    
+    - name: Create Working Fastfile
+      run: |
         mkdir -p fastlane
         cat > fastlane/Fastfile << 'FASTFILE_EOF'
         default_platform(:ios)
         
         platform :ios do
-          lane :build_only do
-            puts "🔨 Starting iOS build..."
+          desc "Create app and build archive"
+          lane :deploy do
+            # Setup API key
+            app_store_connect_api_key(
+              key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
+              issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+              key_filepath: "~/.appstoreconnect/private_keys/AuthKey_#{ENV['APP_STORE_CONNECT_API_KEY_KEY_ID']}.p8"
+            )
             
-            # Find project files
+            # Create app on App Store Connect
+            produce(
+              app_name: ENV["APP_NAME"],
+              app_identifier: ENV["BUNDLE_IDENTIFIER"],
+              language: "en-US",
+              app_version: "1.0",
+              sku: "#{ENV['BUNDLE_IDENTIFIER'].gsub('.', '-')}-#{Time.now.to_i}",
+              skip_itc: false,
+              skip_devcenter: false
+            )
+            
+            puts "✅ App created on App Store Connect"
+            
+            # Find and build project
             workspace_path = Dir.glob("*.xcworkspace").first
             project_path = Dir.glob("*.xcodeproj").first
-            
-            puts "Workspace found: #{workspace_path}" if workspace_path
-            puts "Project found: #{project_path}" if project_path
             
             if workspace_path
               puts "Building workspace: #{workspace_path}"
@@ -75,7 +84,8 @@ jobs:
                 workspace: workspace_path,
                 scheme: File.basename(workspace_path, ".xcworkspace"),
                 configuration: "Release",
-                skip_package_ipa: true,
+                export_method: "app-store",
+                skip_package_ipa: false,
                 xcargs: "CODE_SIGNING_ALLOWED=NO"
               )
             elsif project_path
@@ -84,23 +94,24 @@ jobs:
                 project: project_path,
                 scheme: File.basename(project_path, ".xcodeproj"),
                 configuration: "Release",
-                skip_package_ipa: true,
+                export_method: "app-store", 
+                skip_package_ipa: false,
                 xcargs: "CODE_SIGNING_ALLOWED=NO"
               )
             else
-              UI.user_error!("❌ No Xcode project found!")
+              UI.user_error!("No Xcode project found!")
             end
             
-            puts "✅ Build completed successfully!"
-            puts "📱 App: #{ENV['APP_NAME']}"
-            puts "📦 Bundle ID: #{ENV['BUNDLE_IDENTIFIER']}"
+            puts "✅ Archive created successfully!"
           end
         end
         FASTFILE_EOF
-        
-        # Run build
-        fastlane build_only
+    
+    - name: Run Fastlane Deploy
+      run: fastlane deploy
       env:
+        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
         APP_NAME: ${{ github.event.inputs.app_name }}
