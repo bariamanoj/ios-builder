@@ -202,7 +202,7 @@ jobs:
           echo "📱 Found IPA: $IPA_FILE"
           echo "🔑 Using App Store Connect API Key"
           
-          # Create API key file
+          # Setup App Store Connect API Key
           mkdir -p ~/.appstoreconnect/private_keys/
           cat > ~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8 << 'EOF'
 -----BEGIN PRIVATE KEY-----
@@ -213,10 +213,15 @@ h/IIUUyP
 -----END PRIVATE KEY-----
 EOF
           
-          # Upload using API key file
+          # Setup API key for Fastlane
+          fastlane run app_store_connect_api_key \
+            key_id:"762ZATSHW9" \
+            issuer_id:"b0a700be-f8fa-481c-bb07-9992a2e2052d" \
+            key_filepath:"~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8"
+          
+          # Upload using configured API key
           fastlane run upload_to_app_store \
             ipa:"$IPA_FILE" \
-            api_key_path:"~/.appstoreconnect/private_keys/AuthKey_762ZATSHW9.p8" \
             skip_screenshots:true \
             skip_metadata:true \
             skip_app_version_update:true \
