@@ -60,7 +60,7 @@ jobs:
               in_house: false
             )
             
-            # Generate certificate and provisioning profile
+            # Generate certificate and provisioning profile with username/password
             cert(
               development: false,
               username: "dohrasanket@gmail.com",
