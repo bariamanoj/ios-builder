@@ -63,7 +63,8 @@ jobs:
                 signingStyle: "automatic"
               },
               output_directory: "./build/ipa",
-              output_name: "ManzTestApp2025.ipa"
+              output_name: "ManzTestApp2025.ipa",
+              xcargs: "-allowProvisioningUpdates"
             )
           end
         end
