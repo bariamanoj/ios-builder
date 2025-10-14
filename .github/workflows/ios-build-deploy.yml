@@ -79,10 +79,7 @@ jobs:
                 teamID: "42FLQUC3A9",
                 uploadBitcode: false,
                 uploadSymbols: true,
-                signingStyle: "manual",
-                provisioningProfiles: {
-                  "com.san.mainAp" => "match AppStore com.san.mainAp"
-                }
+                signingStyle: "manual"
               },
               output_directory: "./build/ipa",
               output_name: "ManzTestApp2025.ipa",
