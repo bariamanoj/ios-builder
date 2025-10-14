@@ -49,9 +49,32 @@ jobs:
         default_platform(:ios)
 
         platform :ios do
-          desc "Build with automatic signing"
+          desc "Build with Fastlane automatic provisioning"
           lane :build_and_sign do
-            # Build with automatic code signing (team already set in project)
+            # Setup App Store Connect API authentication
+            app_store_connect_api_key(
+              key_id: "762ZATSHW9",
+              issuer_id: "b0a700be-f8fa-481c-bb07-9992a2e2052d",
+              key_content: ENV["APP_STORE_CONNECT_API_KEY"],
+              duration: 1200,
+              in_house: false
+            )
+            
+            # Generate certificate and provisioning profile
+            cert(
+              development: false,
+              username: "dohrasanket@gmail.com",
+              team_id: "42FLQUC3A9"
+            )
+            
+            sigh(
+              app_identifier: "com.san.mainAp",
+              username: "dohrasanket@gmail.com",
+              team_id: "42FLQUC3A9",
+              force: true
+            )
+            
+            # Build with generated certificates
             gym(
               configuration: "Release",
               export_method: "app-store",
@@ -60,11 +83,10 @@ jobs:
                 teamID: "42FLQUC3A9",
                 uploadBitcode: false,
                 uploadSymbols: true,
-                signingStyle: "automatic"
+                signingStyle: "manual"
               },
               output_directory: "./build/ipa",
-              output_name: "ManzTestApp2025.ipa",
-              xcargs: "-allowProvisioningUpdates"
+              output_name: "ManzTestApp2025.ipa"
             )
           end
         end
@@ -118,6 +140,7 @@ jobs:
         FASTLANE_PASSWORD: "Sanket_4392"
         FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
         MATCH_PASSWORD: "Welcome123"
+        APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
@@ -186,3 +209,4 @@ jobs:
         FASTLANE_PASSWORD: "Sanket_4392"
         FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
         MATCH_PASSWORD: "Welcome123"
+        APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
