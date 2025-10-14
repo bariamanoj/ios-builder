@@ -65,7 +65,7 @@ jobs:
                 signingStyle: "automatic"
               },
               output_directory: "./build/ipa",
-              output_name: "NewAppSample1.ipa"
+              output_name: "ManzTestApp2025.ipa"
             )
           end
         end
@@ -122,7 +122,7 @@ jobs:
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ios-build-${{ github.event.inputs.app_name || 'NewAppSample1' }}
+        name: ios-build-${{ github.event.inputs.app_name || 'ManzTestApp2025' }}
         path: build/
         if-no-files-found: warn
 
