@@ -51,25 +51,8 @@ jobs:
         default_platform(:ios)
 
         platform :ios do
-          desc "Generate certificates and build"
+          desc "Build with automatic signing"
           lane :build_and_sign do
-            # Use existing distribution certificate (skip creation)
-            # cert(
-            #   development: false,
-            #   username: "dohrasanket@gmail.com",
-            #   team_id: "42FLQUC3A9",
-            #   output_path: "./certs/"
-            # )
-            
-            # Generate provisioning profile
-            sigh(
-              app_identifier: "com.san.mainAp",
-              username: "dohrasanket@gmail.com",
-              team_id: "42FLQUC3A9",
-              output_path: "./certs/",
-              filename: "profile.mobileprovision"
-            )
-            
             # Build with automatic code signing
             gym(
               configuration: "Release",
