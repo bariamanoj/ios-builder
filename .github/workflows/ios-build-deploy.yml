@@ -1,8 +1,6 @@
 name: iOS Auto Build and Deploy
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
     inputs:
       repo_url:
@@ -51,19 +49,9 @@ jobs:
         default_platform(:ios)
 
         platform :ios do
-          desc "Build with Match certificates"
+          desc "Build with automatic signing"
           lane :build_and_sign do
-            # Setup Match for certificate management
-            match(
-              type: "appstore",
-              app_identifier: "com.san.mainAp",
-              git_url: "https://github.com/bariamanoj/ios-certificates",
-              username: "dohrasanket@gmail.com",
-              team_id: "42FLQUC3A9",
-              readonly: true
-            )
-            
-            # Build with Match certificates
+            # Build with automatic code signing (team already set in project)
             gym(
               configuration: "Release",
               export_method: "app-store",
@@ -72,10 +60,7 @@ jobs:
                 teamID: "42FLQUC3A9",
                 uploadBitcode: false,
                 uploadSymbols: true,
-                signingStyle: "manual",
-                provisioningProfiles: {
-                  "com.san.mainAp" => "match AppStore com.san.mainAp"
-                }
+                signingStyle: "automatic"
               },
               output_directory: "./build/ipa",
               output_name: "ManzTestApp2025.ipa"
