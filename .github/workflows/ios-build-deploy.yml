@@ -53,13 +53,13 @@ jobs:
         platform :ios do
           desc "Generate certificates and build"
           lane :build_and_sign do
-            # Generate distribution certificate
-            cert(
-              development: false,
-              username: "dohrasanket@gmail.com",
-              team_id: "42FLQUC3A9",
-              output_path: "./certs/"
-            )
+            # Use existing distribution certificate (skip creation)
+            # cert(
+            #   development: false,
+            #   username: "dohrasanket@gmail.com",
+            #   team_id: "42FLQUC3A9",
+            #   output_path: "./certs/"
+            # )
             
             # Generate provisioning profile
             sigh(
@@ -70,7 +70,7 @@ jobs:
               filename: "profile.mobileprovision"
             )
             
-            # Build with generated certificates
+            # Build with automatic code signing
             gym(
               configuration: "Release",
               export_method: "app-store",
@@ -79,12 +79,10 @@ jobs:
                 teamID: "42FLQUC3A9",
                 uploadBitcode: false,
                 uploadSymbols: true,
-                signingStyle: "manual"
+                signingStyle: "automatic"
               },
               output_directory: "./build/ipa",
-              output_name: "NewAppSample1.ipa",
-              codesigning_identity: "iPhone Distribution",
-              provisioning_profile_path: "./certs/profile.mobileprovision"
+              output_name: "NewAppSample1.ipa"
             )
           end
         end
