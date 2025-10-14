@@ -82,7 +82,6 @@ jobs:
             gym(
               configuration: "Release",
               export_method: "app-store",
-              skip_build_archive: true,
               export_options: {
                 method: "app-store",
                 teamID: "42FLQUC3A9",
