@@ -55,7 +55,7 @@ jobs:
             app_store_connect_api_key(
               key_id: "762ZATSHW9",
               issuer_id: "b0a700be-f8fa-481c-bb07-9992a2e2052d",
-              key_content: ENV["APP_STORE_CONNECT_API_KEY"],
+              key_filepath: "./AuthKey_762ZATSHW9.p8",
               duration: 1200,
               in_house: false
             )
@@ -140,13 +140,6 @@ jobs:
         FASTLANE_PASSWORD: "Sanket_4392"
         FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
         MATCH_PASSWORD: "Welcome123"
-        APP_STORE_CONNECT_API_KEY: |
-          -----BEGIN PRIVATE KEY-----
-          MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgifib21Mf+cSHv9S6
-          AoHkFkd2GFpXZ22AvrgtSP9cmGCgCgYIKoZIzj0DAQehRANCAARePKPxfPXkFAq/
-          mcV5YdQ0XkNANofE/30la4lXOleCkJihMPvgt6W6e1sjP+4+aFOv7nL1aRCctFR/
-          h/IIUUyP
-          -----END PRIVATE KEY-----
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
@@ -215,10 +208,3 @@ jobs:
         FASTLANE_PASSWORD: "Sanket_4392"
         FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
         MATCH_PASSWORD: "Welcome123"
-        APP_STORE_CONNECT_API_KEY: |
-          -----BEGIN PRIVATE KEY-----
-          MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgifib21Mf+cSHv9S6
-          AoHkFkd2GFpXZ22AvrgtSP9cmGCgCgYIKoZIzj0DAQehRANCAARePKPxfPXkFAq/
-          mcV5YdQ0XkNANofE/30la4lXOleCkJihMPvgt6W6e1sjP+4+aFOv7nL1aRCctFR/
-          h/IIUUyP
-          -----END PRIVATE KEY-----
