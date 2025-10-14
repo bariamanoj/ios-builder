@@ -53,9 +53,9 @@ jobs:
           lane :build_and_sign do
             # Setup App Store Connect API authentication
             app_store_connect_api_key(
-              key_id: "762ZATSHW9",
-              issuer_id: "b0a700be-f8fa-481c-bb07-9992a2e2052d",
-              key_filepath: "./AuthKey_762ZATSHW9.p8",
+              key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
+              issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+              key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"],
               duration: 1200,
               in_house: false
             )
@@ -140,6 +140,9 @@ jobs:
         FASTLANE_PASSWORD: "Sanket_4392"
         FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
         MATCH_PASSWORD: "Welcome123"
+        APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
@@ -208,3 +211,6 @@ jobs:
         FASTLANE_PASSWORD: "Sanket_4392"
         FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
         MATCH_PASSWORD: "Welcome123"
+        APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
