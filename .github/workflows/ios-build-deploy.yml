@@ -89,7 +89,9 @@ jobs:
                 }
               },
               output_directory: "./build/ipa",
-              output_name: "ManzTestApp2025.ipa"
+              output_name: "ManzTestApp2025.ipa",
+              skip_build_archive: false,
+              archive_path: "./build/archive/ManzTestApp2025.xcarchive"
             )
           end
         end
