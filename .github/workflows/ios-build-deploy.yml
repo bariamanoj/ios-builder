@@ -89,8 +89,7 @@ jobs:
                 }
               },
               output_directory: "./build/ipa",
-              output_name: "ManzTestApp2025.ipa",
-              codesigning_identity: "iPhone Distribution"
+              output_name: "ManzTestApp2025.ipa"
             )
           end
         end
