@@ -74,6 +74,7 @@ jobs:
             gym(
               configuration: "Release",
               export_method: "app-store",
+              destination: "generic/platform=iOS",
               export_options: {
                 method: "app-store",
                 teamID: "42FLQUC3A9",
