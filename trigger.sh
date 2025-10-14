@@ -7,7 +7,7 @@ curl -X POST \
   -d '{
     "ref": "main",
     "inputs": {
-      "repo_url": "bariamanoj/NewAppSample1",
+      "repo_url": "bariamanoj/NewAppSample",
       "app_name": "NewAppSample1",
       "bundle_identifier": "com.san.mainAp"
     }
