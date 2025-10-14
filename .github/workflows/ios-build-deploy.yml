@@ -70,6 +70,14 @@ jobs:
               readonly: false
             )
             
+            # Update project provisioning settings
+            update_project_provisioning(
+              xcodeproj: "NewAppSample.xcodeproj",
+              target_filter: "NewAppSample",
+              profile: ENV["sigh_com.san.mainAp_appstore_profile-path"],
+              code_signing_identity: "iPhone Distribution"
+            )
+            
             # Build with generated certificates
             gym(
               configuration: "Release",
