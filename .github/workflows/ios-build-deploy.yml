@@ -64,7 +64,7 @@ jobs:
             match(
               type: "appstore",
               app_identifier: "com.san.mainAp",
-              git_url: "https://github.com/bariamanoj/ios-certificates",
+              git_url: "https://github.com/bariamanoj/ios-certificates-new",
               username: "dohrasanket@gmail.com",
               team_id: "42FLQUC3A9",
               readonly: false
