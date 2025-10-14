@@ -60,18 +60,14 @@ jobs:
               in_house: false
             )
             
-            # Generate certificate and provisioning profile with username/password
-            cert(
-              development: false,
-              username: "dohrasanket@gmail.com",
-              team_id: "42FLQUC3A9"
-            )
-            
-            sigh(
+            # Use Match for certificate and provisioning profile management
+            match(
+              type: "appstore",
               app_identifier: "com.san.mainAp",
+              git_url: "https://github.com/bariamanoj/ios-certificates",
               username: "dohrasanket@gmail.com",
               team_id: "42FLQUC3A9",
-              force: true
+              readonly: false
             )
             
             # Build with generated certificates
@@ -85,7 +81,7 @@ jobs:
                 uploadSymbols: true,
                 signingStyle: "manual",
                 provisioningProfiles: {
-                  "com.san.mainAp" => ENV["SIGH_NAME"]
+                  "com.san.mainAp" => "match AppStore com.san.mainAp"
                 }
               },
               output_directory: "./build/ipa",
