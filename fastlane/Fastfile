@@ -72,10 +72,68 @@ platform :ios do
     end
   end
 
+  desc "Upload metadata to App Store Connect"
+  lane :upload_metadata do |options|
+    deliver(
+      app_identifier: options[:bundle_id] || "com.san.mainAp",
+      metadata_path: "./metadata",
+      screenshots_path: "./screenshots",
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      force: true,
+      overwrite_screenshots: false,
+      submit_for_review: false,
+      automatic_release: false,
+      skip_app_version_update: true,
+      app_version: "1.0",
+      copyright: "@ManzzPlusApp",
+      primary_category: "UTILITIES",
+      keywords: {
+        "en-US" => "ManzzPlusApp"
+      },
+      description: {
+        "en-US" => options[:description] || "ManzTestApp2025 - A utility application"
+      },
+      name: {
+        "en-US" => options[:app_name] || "ManzTestApp2025"
+      },
+      support_url: {
+        "en-US" => "https://manzz.app/support"
+      },
+      marketing_url: {
+        "en-US" => "https://manzz.app"
+      },
+      privacy_url: {
+        "en-US" => "https://manzz.app/privacy"
+      },
+      app_review_information: {
+        contact_email: "dohrasanket@gmail.com",
+        contact_first_name: "SANKETKUMAR",
+        contact_last_name: "DOHRA",
+        contact_phone: "+91 9265171259",
+        demo_account_name: "",
+        demo_account_password: "",
+        notes: "Test app for ManzTestApp2025"
+      },
+      submission_information: {
+        export_compliance_platform: "ios",
+        export_compliance_compliance_required: false,
+        export_compliance_encryption_updated: false,
+        export_compliance_app_type: nil,
+        export_compliance_uses_encryption: false,
+        export_compliance_is_exempt: true,
+        export_compliance_contains_third_party_cryptography: false,
+        export_compliance_contains_proprietary_cryptography: false,
+        export_compliance_available_on_french_store: false
+      }
+    )
+  end
+
   desc "Complete build and upload process"
   lane :build_and_upload do |options|
     build_archive(options)
     create_app(options)
     upload_ipa(options)
+    upload_metadata(options)
   end
 end
