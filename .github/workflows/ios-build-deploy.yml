@@ -12,19 +12,68 @@ on:
         required: true
         type: string
       bundle_identifier:
-        description: 'Bundle identifier (e.g., com.company.app)'
+        description: 'Bundle identifier'
         required: true
         type: string
-      app_metadata:
-        description: 'App metadata JSON'
+      # App Metadata
+      category:
+        description: 'App category'
         required: false
         type: string
-      age_rating:
-        description: 'Age rating JSON'
+        default: 'UTILITIES'
+      description:
+        description: 'App description'
         required: false
         type: string
-      review_info:
-        description: 'Review info JSON'
+      keywords:
+        description: 'App keywords'
+        required: false
+        type: string
+      copyright:
+        description: 'Copyright text'
+        required: false
+        type: string
+      marketing_url:
+        description: 'Marketing URL'
+        required: false
+        type: string
+      privacy_policy_url:
+        description: 'Privacy policy URL'
+        required: false
+        type: string
+      price_tier:
+        description: 'Price tier'
+        required: false
+        type: string
+        default: '0'
+      version_whats_new:
+        description: 'Version release notes'
+        required: false
+        type: string
+      version_number:
+        description: 'Version number'
+        required: false
+        type: string
+        default: '1.0'
+      # Review Info
+      first_name:
+        description: 'Review contact first name'
+        required: false
+        type: string
+      last_name:
+        description: 'Review contact last name'
+        required: false
+        type: string
+      phone_number:
+        description: 'Review contact phone'
+        required: false
+        type: string
+      email:
+        description: 'Review contact email'
+        required: false
+        type: string
+      review_notes:
+        description: 'Review notes'
         required: false
         type: string
 
@@ -83,16 +132,12 @@ jobs:
 
           desc "Setup App Store Connect metadata"
           lane :setup_metadata do |options|
-            app_metadata = JSON.parse(ENV["APP_METADATA"] || "{}")
-            age_rating = JSON.parse(ENV["AGE_RATING"] || "{}")
-            review_info = JSON.parse(ENV["REVIEW_INFO"] || "{}")
-            
             # Create app if it doesn't exist
             produce(
               app_name: options[:app_name] || "MyApp",
               app_identifier: options[:bundle_id] || "com.example.app",
               language: "en-US",
-              app_version: app_metadata["version_number"] || "1.0",
+              app_version: ENV["VERSION_NUMBER"] || "1.0",
               sku: "#{options[:bundle_id].gsub('.', '-')}-#{Time.now.to_i}",
               skip_itc: false,
               skip_devcenter: false
@@ -101,29 +146,29 @@ jobs:
             # Upload metadata
             deliver(
               app_identifier: options[:bundle_id],
-              app_version: app_metadata["version_number"] || "1.0",
+              app_version: ENV["VERSION_NUMBER"] || "1.0",
               description: {
-                "en-US" => app_metadata["description"] || "Sample app description"
+                "en-US" => ENV["APP_DESCRIPTION"] || "Sample app description"
               },
               keywords: {
-                "en-US" => app_metadata["keywords"] || "app"
+                "en-US" => ENV["APP_KEYWORDS"] || "app"
               },
-              copyright: app_metadata["copyright"] || "2025 Company",
-              marketing_url: app_metadata["marketing_url"],
-              privacy_url: app_metadata["privacy_policy_url"],
-              primary_category: app_metadata["category"] || "UTILITIES",
-              price_tier: app_metadata["price_tier"] || "0",
+              copyright: ENV["APP_COPYRIGHT"] || "2025 Company",
+              marketing_url: ENV["MARKETING_URL"],
+              privacy_url: ENV["PRIVACY_POLICY_URL"],
+              primary_category: ENV["APP_CATEGORY"] || "UTILITIES",
+              price_tier: ENV["PRICE_TIER"] || "0",
               release_notes: {
-                "en-US" => app_metadata["version_whats_new"] || "Bug fixes and improvements"
+                "en-US" => ENV["VERSION_WHATS_NEW"] || "Bug fixes and improvements"
               },
               review_information: {
-                first_name: review_info["first_name"] || "John",
-                last_name: review_info["last_name"] || "Doe",
-                phone_number: review_info["phone_number"] || "+1234567890",
-                email_address: review_info["email"] || "test@example.com",
+                first_name: ENV["REVIEW_FIRST_NAME"] || "John",
+                last_name: ENV["REVIEW_LAST_NAME"] || "Doe",
+                phone_number: ENV["REVIEW_PHONE"] || "+1234567890",
+                email_address: ENV["REVIEW_EMAIL"] || "test@example.com",
                 demo_user: "",
                 demo_password: "",
-                notes: review_info["review_notes"] || "No special instructions"
+                notes: ENV["REVIEW_NOTES"] || "No special instructions"
               },
               submission_information: {
                 add_id_info_limits_tracking: true,
@@ -219,9 +264,22 @@ jobs:
         APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
         APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
-        APP_METADATA: ${{ github.event.inputs.app_metadata }}
-        AGE_RATING: ${{ github.event.inputs.age_rating }}
-        REVIEW_INFO: ${{ github.event.inputs.review_info }}
+        # App Metadata
+        APP_CATEGORY: ${{ github.event.inputs.category }}
+        APP_DESCRIPTION: ${{ github.event.inputs.description }}
+        APP_KEYWORDS: ${{ github.event.inputs.keywords }}
+        APP_COPYRIGHT: ${{ github.event.inputs.copyright }}
+        MARKETING_URL: ${{ github.event.inputs.marketing_url }}
+        PRIVACY_POLICY_URL: ${{ github.event.inputs.privacy_policy_url }}
+        PRICE_TIER: ${{ github.event.inputs.price_tier }}
+        VERSION_WHATS_NEW: ${{ github.event.inputs.version_whats_new }}
+        VERSION_NUMBER: ${{ github.event.inputs.version_number }}
+        # Review Info
+        REVIEW_FIRST_NAME: ${{ github.event.inputs.first_name }}
+        REVIEW_LAST_NAME: ${{ github.event.inputs.last_name }}
+        REVIEW_PHONE: ${{ github.event.inputs.phone_number }}
+        REVIEW_EMAIL: ${{ github.event.inputs.email }}
+        REVIEW_NOTES: ${{ github.event.inputs.review_notes }}
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
@@ -261,6 +319,3 @@ jobs:
         APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
         APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
-        APP_METADATA: ${{ github.event.inputs.app_metadata }}
-        AGE_RATING: ${{ github.event.inputs.age_rating }}
-        REVIEW_INFO: ${{ github.event.inputs.review_info }}
