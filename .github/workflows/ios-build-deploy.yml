@@ -191,7 +191,11 @@ jobs:
           echo "💰 Setting app pricing to free"
           ruby -e "
             require 'spaceship'
-            Spaceship::ConnectAPI.token = ENV['APP_STORE_CONNECT_API_KEY_KEY']
+            Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+              key_id: '762ZATSHW9',
+              issuer_id: 'b0a700be-f8fa-481c-bb07-9992a2e2052d',
+              key: ENV['APP_STORE_CONNECT_API_KEY_KEY']
+            )
             app = Spaceship::ConnectAPI::App.find('com.san.mainAp')
             app.update_price_tier(0)
             puts 'App pricing set to free (tier 0)'
