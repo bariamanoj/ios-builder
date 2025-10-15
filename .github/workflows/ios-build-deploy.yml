@@ -40,18 +40,39 @@ jobs:
     - name: Install Fastlane
       run: gem install fastlane
 
-    - name: Generate Certificates with Fastlane
+    - name: Build and Sign with Fastlane
       run: |
-        echo "🔐 Generating certificates with Fastlane"
+        echo "🔐 Building with Fastlane and compliance automation"
         
         mkdir -p fastlane
         cat > fastlane/Fastfile << 'EOF'
         default_platform(:ios)
 
         platform :ios do
+          desc "Add export compliance key to Info.plist"
+          lane :add_compliance_key do |options|
+            info_plist_path = nil
+            
+            if Dir.glob("**/Info.plist").any?
+              info_plist_path = Dir.glob("**/Info.plist").find { |path| !path.include?('build') && !path.include?('Pods') }
+            end
+            
+            if info_plist_path && File.exist?(info_plist_path)
+              set_info_plist_value(
+                path: info_plist_path,
+                key: "ITSAppUsesNonExemptEncryption",
+                value: false
+              )
+              UI.success("Added export compliance key to #{info_plist_path}")
+            else
+              UI.message("Info.plist not found, compliance will be handled during upload")
+            end
+          end
+
           desc "Build with Fastlane automatic provisioning"
           lane :build_and_sign do
-            # Setup App Store Connect API authentication
+            add_compliance_key
+            
             app_store_connect_api_key(
               key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
               issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
@@ -60,7 +81,6 @@ jobs:
               in_house: false
             )
             
-            # Create and unlock keychain for certificate storage
             create_keychain(
               name: "fastlane_tmp_keychain",
               password: "temppassword123",
@@ -70,7 +90,6 @@ jobs:
               lock_when_sleeps: false
             )
             
-            # Use Match for certificate and provisioning profile management
             match(
               type: "appstore",
               app_identifier: "com.san.mainAp",
@@ -82,7 +101,6 @@ jobs:
               keychain_password: "temppassword123"
             )
             
-            # Update project provisioning settings
             update_project_provisioning(
               xcodeproj: "NewAppSample.xcodeproj",
               target_filter: "NewAppSample",
@@ -90,7 +108,6 @@ jobs:
               code_signing_identity: "iPhone Distribution"
             )
             
-            # Build with generated certificates
             gym(
               configuration: "Release",
               export_method: "app-store",
@@ -110,51 +127,10 @@ jobs:
         end
         EOF
         
-        # Create certs directory
-        mkdir -p certs
-        
-        # Run Fastlane
         fastlane build_and_sign
         
       env:
-        FASTLANE_SESSION: |
-          ---
-          - !ruby/object:HTTP::Cookie
-            name: myacinfo
-            value: DAWTKNV323952cf8084a204fb20ab2508441a07d02d310a0dadf7c715e953ad1eed5ef11eac98285b7e4ce46d483139894ea5702a7f596beb9e172af8c071b38d57877acfc8968b8a5afca9e6a8ce7b8e27dd5a4b23a3b7e0f19a294ae74b89ece73d226a67de542d74b03ae434ad8776fd7aac41618f87fdb87933848a8f54cf9249231e4cf9c09ae3ba3bebd1ff66dd44f11e17e049ad840ebcf624bbea5030b895bfa364d98ebb36ea8e729355143eff6128afcb9bc8cd1a58187160605efa8d8c0c2fee3b24ff5d65b06b74c295f846fbd0b04a145bc4133c0495b9259446bfe6bd609a9ce86fea7231cbf438601fb4ebc88a312d2e4b9f56728a3bec998424adb23a33cb3ce49d1b16daf6f9c1e4cc101d67da26f6cd711bfa36f41b71f64b6d8e67cfdd62678edcd8a1a96d6b33c2005c4a6b80255a6704af4ee83662f9a17042ef2d7326039c29f45777a457e96f17b0398319a4b7a58509204b5141a23b1fbef934ab29f1a3dbc43a64b99b09c73bb208942ce99fcef795788ab749606914a3761c9c71b866fe17df959ec6c10b2682e05c0389ef0ca906d509965776435e55591940b61757b741c9d09847121a686ec64e0f46e83ec88bebe95967e6989a84d4d43626877683bfd2f7f1065fea66160f7838b3749c675a659d85a0aefc88da170f7b7a370942bfe7c495a901f04ffeb6c4862edcbf34c2b7e70f4100a8c6559cbc0de6bdb34eda5b368bbf0f60ca0107f2f585a47V3
-            domain: apple.com
-            for_domain: true
-            path: "/"
-            secure: true
-            httponly: true
-            expires:
-            max_age:
-            created_at: 2025-10-14 10:17:21.846855000 +05:30
-            accessed_at: 2025-10-14 10:17:21.848006000 +05:30
-          - !ruby/object:HTTP::Cookie
-            name: DES521e216212c21f11a57fea7444394ae78
-            value: HSARMTKNSRVXWFlaT2xBLF+Quc4blkCklk9hmyJARkstbGcBSuzM9C1BydSr5uYzKaWm5qX+VzcW7nRHSOXOegc3ZXJG+6vIg8ERyLZLOR5ZsOwVzwt/QfKVHUK8LlN0tCsXfp4ah+TKi73ddCfmY3dEFonCJ/BUwLOhipg78JXJUjtzZLIqXU0b1e31YWqFDw==SRVX
-            domain: idmsa.apple.com
-            for_domain: true
-            path: "/"
-            secure: true
-            httponly: true
-            expires:
-            max_age: 2592000
-            created_at: 2025-10-10 11:30:12.666718000 +05:30
-            accessed_at: 2025-10-14 10:17:19.812593000 +05:30
-          - !ruby/object:HTTP::Cookie
-            name: dqsid
-            value: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NjA0MTcyNDIsImp0aSI6IkxxRG5fR2RBT3hxQ2NnZHRLZ3NITUEifQ.2ILEREcsCBSIuAp8wPDEyUwaJl8_fH_xNG71K60KmYE
-            domain: appstoreconnect.apple.com
-            for_domain: false
-            path: "/"
-            secure: true
-            httponly: true
-            expires:
-            max_age: 1800
-            created_at: &1 2025-10-14 10:17:22.487443000 +05:30
-            accessed_at: *1
+        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
         FASTLANE_PASSWORD: "Sanket_4392"
         FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
         MATCH_PASSWORD: "Welcome123"
@@ -169,63 +145,42 @@ jobs:
         path: build/
         if-no-files-found: warn
 
-    - name: Upload to TestFlight
+    - name: Upload to App Store with Compliance
       run: |
-        echo "🚀 Uploading to TestFlight"
+        echo "🚀 Uploading to App Store with compliance automation"
         
         IPA_FILE=$(find build/ipa -name "*.ipa" | head -1)
         
         if [ -n "$IPA_FILE" ]; then
           echo "📱 Found IPA: $IPA_FILE"
           
-          fastlane run upload_to_testflight \
+          fastlane run upload_to_app_store \
             ipa:"$IPA_FILE" \
             username:"dohrasanket@gmail.com" \
-            skip_waiting_for_build_processing:true
+            skip_screenshots:true \
+            skip_metadata:true \
+            skip_app_version_update:true \
+            submit_for_review:true \
+            automatic_release:true \
+            submission_information:'{
+              "export_compliance_platform": "ios",
+              "export_compliance_compliance_required": false,
+              "export_compliance_encryption_updated": false,
+              "export_compliance_uses_encryption": false,
+              "export_compliance_is_exempt": true,
+              "export_compliance_contains_third_party_cryptography": false,
+              "export_compliance_contains_proprietary_cryptography": false,
+              "export_compliance_available_on_french_store": true
+            }' \
+            force:true \
+            precheck_include_in_app_purchases:false
             
-          echo "✅ Upload completed!"
+          echo "✅ Upload and submission completed!"
         else
           echo "⚠️ No IPA found to upload"
         fi
       env:
-        FASTLANE_SESSION: |
-          ---
-          - !ruby/object:HTTP::Cookie
-            name: myacinfo
-            value: DAWTKNV323952cf8084a204fb20ab2508441a07d02d310a0dadf7c715e953ad1eed5ef11eac98285b7e4ce46d483139894ea5702a7f596beb9e172af8c071b38d57877acfc8968b8a5afca9e6a8ce7b8e27dd5a4b23a3b7e0f19a294ae74b89ece73d226a67de542d74b03ae434ad8776fd7aac41618f87fdb87933848a8f54cf9249231e4cf9c09ae3ba3bebd1ff66dd44f11e17e049ad840ebcf624bbea5030b895bfa364d98ebb36ea8e729355143eff6128afcb9bc8cd1a58187160605efa8d8c0c2fee3b24ff5d65b06b74c295f846fbd0b04a145bc4133c0495b9259446bfe6bd609a9ce86fea7231cbf438601fb4ebc88a312d2e4b9f56728a3bec998424adb23a33cb3ce49d1b16daf6f9c1e4cc101d67da26f6cd711bfa36f41b71f64b6d8e67cfdd62678edcd8a1a96d6b33c2005c4a6b80255a6704af4ee83662f9a17042ef2d7326039c29f45777a457e96f17b0398319a4b7a58509204b5141a23b1fbef934ab29f1a3dbc43a64b99b09c73bb208942ce99fcef795788ab749606914a3761c9c71b866fe17df959ec6c10b2682e05c0389ef0ca906d509965776435e55591940b61757b741c9d09847121a686ec64e0f46e83ec88bebe95967e6989a84d4d43626877683bfd2f7f1065fea66160f7838b3749c675a659d85a0aefc88da170f7b7a370942bfe7c495a901f04ffeb6c4862edcbf34c2b7e70f4100a8c6559cbc0de6bdb34eda5b368bbf0f60ca0107f2f585a47V3
-            domain: apple.com
-            for_domain: true
-            path: "/"
-            secure: true
-            httponly: true
-            expires:
-            max_age:
-            created_at: 2025-10-14 10:17:21.846855000 +05:30
-            accessed_at: 2025-10-14 10:17:21.848006000 +05:30
-          - !ruby/object:HTTP::Cookie
-            name: DES521e216212c21f11a57fea7444394ae78
-            value: HSARMTKNSRVXWFlaT2xBLF+Quc4blkCklk9hmyJARkstbGcBSuzM9C1BydSr5uYzKaWm5qX+VzcW7nRHSOXOegc3ZXJG+6vIg8ERyLZLOR5ZsOwVzwt/QfKVHUK8LlN0tCsXfp4ah+TKi73ddCfmY3dEFonCJ/BUwLOhipg78JXJUjtzZLIqXU0b1e31YWqFDw==SRVX
-            domain: idmsa.apple.com
-            for_domain: true
-            path: "/"
-            secure: true
-            httponly: true
-            expires:
-            max_age: 2592000
-            created_at: 2025-10-10 11:30:12.666718000 +05:30
-            accessed_at: 2025-10-14 10:17:19.812593000 +05:30
-          - !ruby/object:HTTP::Cookie
-            name: dqsid
-            value: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NjA0MTcyNDIsImp0aSI6IkxxRG5fR2RBT3hxQ2NnZHRLZ3NITUEifQ.2ILEREcsCBSIuAp8wPDEyUwaJl8_fH_xNG71K60KmYE
-            domain: appstoreconnect.apple.com
-            for_domain: false
-            path: "/"
-            secure: true
-            httponly: true
-            expires:
-            max_age: 1800
-            created_at: &1 2025-10-14 10:17:22.487443000 +05:30
-            accessed_at: *1
+        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
         FASTLANE_PASSWORD: "Sanket_4392"
         FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
         MATCH_PASSWORD: "Welcome123"

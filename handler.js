@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "ghp_BqjQVY0H3r4xOcQZpL2wN8vK1mE6sA9dF7tG";
+const GITHUB_TOKEN = process.env.GH_TOKEN || "process.env.GH_TOKEN";
 const GITHUB_OWNER = "bariamanoj";
 const GITHUB_REPO = "ios-builder";
 
