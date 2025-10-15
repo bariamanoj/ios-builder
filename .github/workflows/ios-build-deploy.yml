@@ -153,12 +153,13 @@ jobs:
             
             # Upload to App Store Connect
             begin
-              upload_to_app_store(
+              deliver(
                 submit_for_review: false,
                 automatic_release: false,
                 skip_metadata: true,
                 skip_screenshots: true,
-                skip_pricing_info: true
+                skip_pricing_info: true,
+                force: true
               )
               puts "✅ Uploaded to App Store Connect!"
             rescue => e
