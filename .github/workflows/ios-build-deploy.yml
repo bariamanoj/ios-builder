@@ -123,8 +123,12 @@ jobs:
                 "en-US" => ENV["APP_KEYWORDS"] || "app"
               },
               copyright: ENV["APP_COPYRIGHT"] || "2025 Company",
-              marketing_url: ENV["MARKETING_URL"],
-              privacy_url: ENV["PRIVACY_POLICY_URL"],
+              marketing_url: {
+                "en-US" => ENV["MARKETING_URL"]
+              },
+              privacy_url: {
+                "en-US" => ENV["PRIVACY_POLICY_URL"]
+              },
               primary_category: ENV["APP_CATEGORY"] || "UTILITIES",
               price_tier: ENV["PRICE_TIER"] || "0",
               release_notes: {
