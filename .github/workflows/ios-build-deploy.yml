@@ -189,9 +189,13 @@ jobs:
             submission_information:"{\"add_id_info_limits_tracking\":false,\"add_id_info_serves_ads\":false,\"add_id_info_tracks_action\":false,\"add_id_info_tracks_install\":false,\"add_id_info_uses_idfa\":false,\"content_rights_has_rights\":true,\"content_rights_contains_third_party_content\":false,\"export_compliance_platform\":\"ios\",\"export_compliance_compliance_required\":false,\"export_compliance_encryption_updated\":false,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":true,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":true}"
           
           echo "💰 Setting app pricing to free"
-          fastlane run set_app_pricing \
-            app_identifier:"com.san.mainAp" \
-            price_tier:0
+          ruby -e "
+            require 'spaceship'
+            Spaceship::ConnectAPI.token = ENV['APP_STORE_CONNECT_API_KEY_KEY']
+            app = Spaceship::ConnectAPI::App.find('com.san.mainAp')
+            app.update_price_tier(0)
+            puts 'App pricing set to free (tier 0)'
+          "
             
           echo "✅ Upload and metadata completed!"
         else
