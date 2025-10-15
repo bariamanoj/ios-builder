@@ -31,6 +31,34 @@ on:
         description: 'Contact Email'
         required: true
         type: string
+      app_category:
+        description: 'App Category'
+        required: true
+        type: string
+      app_description:
+        description: 'App Description'
+        required: true
+        type: string
+      app_keywords:
+        description: 'App Keywords'
+        required: true
+        type: string
+      app_copyright:
+        description: 'App Copyright'
+        required: true
+        type: string
+      marketing_url:
+        description: 'Marketing URL'
+        required: true
+        type: string
+      privacy_policy_url:
+        description: 'Privacy Policy URL'
+        required: true
+        type: string
+      price_tier:
+        description: 'Price Tier'
+        required: true
+        type: string
 
 jobs:
   build-and-deploy:
@@ -141,7 +169,7 @@ jobs:
 
     - name: Upload to App Store
       run: |
-        echo "🚀 Uploading to App Store with contact information"
+        echo "🚀 Uploading to App Store with complete metadata"
         
         IPA_FILE=$(find build/ipa -name "*.ipa" | head -1)
         
@@ -155,16 +183,24 @@ jobs:
             skip_metadata:true \
             force:true
           
-          echo "📝 Setting contact information"
+          echo "📝 Setting complete metadata and contact information"
           fastlane run deliver \
             username:"${{ github.event.inputs.contact_email }}" \
             app_identifier:"com.san.mainAp" \
             skip_screenshots:true \
-            skip_metadata:true \
             skip_binary_upload:true \
-            app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"demo_account_name\":\"\",\"demo_account_password\":\"\",\"notes\":\"Contact information for ManzTestApp2025\"}"
+            force:true \
+            description:"{\"en-US\":\"${{ github.event.inputs.app_description }}\"}" \
+            keywords:"{\"en-US\":\"${{ github.event.inputs.app_keywords }}\"}" \
+            copyright:"${{ github.event.inputs.app_copyright }}" \
+            marketing_url:"{\"en-US\":\"${{ github.event.inputs.marketing_url }}\"}" \
+            privacy_url:"{\"en-US\":\"${{ github.event.inputs.privacy_policy_url }}\"}" \
+            primary_category:"${{ github.event.inputs.app_category }}" \
+            price_tier:"${{ github.event.inputs.price_tier }}" \
+            app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"demo_account_name\":\"\",\"demo_account_password\":\"\",\"notes\":\"Contact information for ManzTestApp2025\"}" \
+            submission_information:"{\"add_id_info_limits_tracking\":false,\"add_id_info_serves_ads\":false,\"add_id_info_tracks_action\":false,\"add_id_info_tracks_install\":false,\"add_id_info_uses_idfa\":false,\"content_rights_has_rights\":true,\"content_rights_contains_third_party_content\":false,\"export_compliance_platform\":\"ios\",\"export_compliance_compliance_required\":false,\"export_compliance_encryption_updated\":false,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":true,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":true}"
             
-          echo "✅ Upload and contact info completed!"
+          echo "✅ Upload and metadata completed!"
         else
           echo "⚠️ No IPA found to upload"
         fi
