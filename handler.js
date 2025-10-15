@@ -25,7 +25,8 @@ exports.handler = async (event) => {
       contact_email,
       app_description,
       marketing_url,
-      privacy_policy_url
+      privacy_policy_url,
+      support_url
     } = params;
     
     console.log(`Triggering build for: ${app_name} (${bundle_identifier})`);
@@ -44,7 +45,7 @@ exports.handler = async (event) => {
           contact_phone: contact_phone || "+91 9265171259",
           contact_email: contact_email || "dohrasanket@gmail.com",
           app_description: app_description || "This ManzzPlusApp app is just simple, sample demo app where you can get lots of details and guide and tips, This app spedically design for you, so why are you waiting just download and enjoy it.",
-          marketing_url: marketing_url || "https://dohrasanket.pages.dev/",
+          support_url: support_url || marketing_url || "https://dohrasanket.pages.dev/",
           privacy_policy_url: privacy_policy_url || "https://dohrasanket.pages.dev/PrivacyPolicy"
         }
       },
