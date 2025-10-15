@@ -136,10 +136,10 @@ jobs:
                 "en-US" => ENV["VERSION_WHATS_NEW"] || "Bug fixes and improvements"
               },
               app_review_information: {
-                first_name: ENV["REVIEW_FIRST_NAME"] || "John",
-                last_name: ENV["REVIEW_LAST_NAME"] || "Doe",
-                phone_number: ENV["REVIEW_PHONE"] || "+1234567890",
-                email_address: ENV["REVIEW_EMAIL"] || "test@example.com",
+                contactFirstName: ENV["REVIEW_FIRST_NAME"] || "John",
+                contactLastName: ENV["REVIEW_LAST_NAME"] || "Doe",
+                contactPhone: ENV["REVIEW_PHONE"] || "+1234567890",
+                contactEmail: ENV["REVIEW_EMAIL"] || "test@example.com",
                 demo_user: "",
                 demo_password: "",
                 notes: ENV["REVIEW_NOTES"] || "No special instructions"
