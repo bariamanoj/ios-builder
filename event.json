@@ -1,5 +1,9 @@
 {
-  "repo_url": "bariamanoj/ManzzContactApp",
-  "app_name": "Manzz Contact Test",
-  "bundle_identifier": "com.manzz.contacttest"
+  "repo_url": "bariamanoj/NewAppSample",
+  "app_name": "ManzTestApp2025", 
+  "bundle_identifier": "com.san.mainAp",
+  "contact_first_name": "SANKETKUMAR",
+  "contact_last_name": "DOHRA",
+  "contact_phone": "+91 9265171259",
+  "contact_email": "dohrasanket@gmail.com"
 }

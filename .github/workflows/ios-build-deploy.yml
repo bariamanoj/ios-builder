@@ -141,7 +141,7 @@ jobs:
 
     - name: Upload to App Store
       run: |
-        echo "🚀 Uploading to App Store for distribution"
+        echo "🚀 Uploading to App Store with contact information"
         
         IPA_FILE=$(find build/ipa -name "*.ipa" | head -1)
         
@@ -153,11 +153,8 @@ jobs:
             username:"${{ github.event.inputs.contact_email }}" \
             skip_screenshots:true \
             skip_metadata:true \
-            submit_for_review:true \
-            automatic_release:true \
             force:true \
-            submission_information:"{\"add_id_info_limits_tracking\":true,\"add_id_info_serves_ads\":false,\"add_id_info_tracks_action\":true,\"add_id_info_tracks_install\":true,\"add_id_info_uses_idfa\":true,\"content_rights_has_rights\":true,\"content_rights_contains_third_party_content\":false,\"export_compliance_platform\":\"ios\",\"export_compliance_compliance_required\":false,\"export_compliance_encryption_updated\":false,\"export_compliance_app_type\":null,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":false,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":false}" \
-            app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"demo_account_name\":\"\",\"demo_account_password\":\"\",\"notes\":\"Automated build and submission for ManzTestApp2025 v1.1\"}"
+            app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"demo_account_name\":\"\",\"demo_account_password\":\"\",\"notes\":\"Automated build for ManzTestApp2025 v1.1\"}"
             
           echo "✅ Upload completed!"
         else
