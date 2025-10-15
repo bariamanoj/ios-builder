@@ -131,6 +131,7 @@ jobs:
                 "en-US" => ENV["PRIVACY_POLICY_URL"]
               },
               primary_category: ENV["APP_CATEGORY"] || "UTILITIES",
+              price_tier: ENV["PRICE_TIER"] || "0",
               release_notes: {
                 "en-US" => ENV["VERSION_WHATS_NEW"] || "Bug fixes and improvements"
               },
@@ -154,7 +155,6 @@ jobs:
               },
               skip_screenshots: true,
               skip_metadata: false,
-              skip_binary_upload: true,
               force: true,
               overwrite_screenshots: false
             )
