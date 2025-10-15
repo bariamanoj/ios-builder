@@ -114,6 +114,7 @@ jobs:
             
             # Upload metadata
             deliver(
+              username: "dohrasanket@gmail.com",
               app_identifier: "com.san.mainAp",
               app_version: ENV["VERSION_NUMBER"] || "1.0",
               description: {
