@@ -134,7 +134,7 @@ jobs:
               release_notes: {
                 "en-US" => ENV["VERSION_WHATS_NEW"] || "Bug fixes and improvements"
               },
-              review_information: {
+              app_review_information: {
                 first_name: ENV["REVIEW_FIRST_NAME"] || "John",
                 last_name: ENV["REVIEW_LAST_NAME"] || "Doe",
                 phone_number: ENV["REVIEW_PHONE"] || "+1234567890",
