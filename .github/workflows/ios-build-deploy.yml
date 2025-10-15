@@ -157,7 +157,8 @@ jobs:
                 submit_for_review: false,
                 automatic_release: false,
                 skip_metadata: true,
-                skip_screenshots: true
+                skip_screenshots: true,
+                skip_pricing_info: true
               )
               puts "✅ Uploaded to App Store Connect!"
             rescue => e
