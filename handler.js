@@ -23,13 +23,9 @@ exports.handler = async (event) => {
       contact_last_name,
       contact_phone,
       contact_email,
-      app_category,
       app_description,
-      app_keywords,
-      app_copyright,
       marketing_url,
-      privacy_policy_url,
-      price_tier
+      privacy_policy_url
     } = params;
     
     console.log(`Triggering build for: ${app_name} (${bundle_identifier})`);
@@ -47,13 +43,9 @@ exports.handler = async (event) => {
           contact_last_name: contact_last_name || "DOHRA",
           contact_phone: contact_phone || "+91 9265171259",
           contact_email: contact_email || "dohrasanket@gmail.com",
-          app_category: app_category || "UTILITIES",
           app_description: app_description || "This ManzzPlusApp app is just simple, sample demo app where you can get lots of details and guide and tips, This app spedically design for you, so why are you waiting just download and enjoy it.",
-          app_keywords: app_keywords || "ManzzPlusApp",
-          app_copyright: app_copyright || "@ManzzPlusApp",
           marketing_url: marketing_url || "https://dohrasanket.pages.dev/",
-          privacy_policy_url: privacy_policy_url || "https://dohrasanket.pages.dev/PrivacyPolicy",
-          price_tier: price_tier || "0"
+          privacy_policy_url: privacy_policy_url || "https://dohrasanket.pages.dev/PrivacyPolicy"
         }
       },
       {
