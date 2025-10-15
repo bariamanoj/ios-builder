@@ -153,10 +153,18 @@ jobs:
             username:"${{ github.event.inputs.contact_email }}" \
             skip_screenshots:true \
             skip_metadata:true \
-            force:true \
-            app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"demo_account_name\":\"\",\"demo_account_password\":\"\",\"notes\":\"Automated build for ManzTestApp2025 v1.1\"}"
+            force:true
+          
+          echo "📝 Setting contact information"
+          fastlane run deliver \
+            username:"${{ github.event.inputs.contact_email }}" \
+            app_identifier:"com.san.mainAp" \
+            skip_screenshots:true \
+            skip_metadata:true \
+            skip_binary_upload:true \
+            app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"demo_account_name\":\"\",\"demo_account_password\":\"\",\"notes\":\"Contact information for ManzTestApp2025\"}"
             
-          echo "✅ Upload completed!"
+          echo "✅ Upload and contact info completed!"
         else
           echo "⚠️ No IPA found to upload"
         fi
