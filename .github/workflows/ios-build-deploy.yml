@@ -176,14 +176,13 @@ jobs:
             force:true \
             description:"{\"en-US\":\"${{ github.event.inputs.app_description }}\"}" \
             keywords:"{\"en-US\":\"ManzzPlusApp\"}" \
-            copyright:"@ManzzPlusApp" \
+            copyright:"@ManzzPlusApp 2025" \
             marketing_url:"{\"en-US\":\"${{ github.event.inputs.support_url }}\"}" \
             privacy_url:"{\"en-US\":\"${{ github.event.inputs.privacy_policy_url }}\"}" \
             support_url:"{\"en-US\":\"${{ github.event.inputs.support_url }}\"}" \
             primary_category:"UTILITIES" \
             app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"demo_account_name\":\"\",\"demo_account_password\":\"\",\"notes\":\"Contact information for ManzTestApp2025\"}" \
-            submission_information:"{\"add_id_info_limits_tracking\":false,\"add_id_info_serves_ads\":false,\"add_id_info_tracks_action\":false,\"add_id_info_tracks_install\":false,\"add_id_info_uses_idfa\":false,\"content_rights_has_rights\":true,\"content_rights_contains_third_party_content\":false,\"export_compliance_platform\":\"ios\",\"export_compliance_compliance_required\":false,\"export_compliance_encryption_updated\":false,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":true,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":true}" \
-            age_rating_declaration:"{\"CARTOON_FANTASY_VIOLENCE\":0,\"REALISTIC_VIOLENCE\":0,\"PROLONGED_GRAPHIC_SADISTIC_REALISTIC_VIOLENCE\":0,\"PROFANITY_CRUDE_HUMOR\":0,\"MATURE_SUGGESTIVE\":0,\"HORROR\":0,\"MEDICAL_TREATMENT_INFO\":0,\"ALCOHOL_TOBACCO_DRUGS\":0,\"GAMBLING\":0,\"SEXUAL_CONTENT_NUDITY\":0,\"GRAPHIC_SEXUAL_CONTENT_NUDITY\":0,\"UNRESTRICTED_WEB_ACCESS\":false,\"GAMBLING_CONTESTS\":false}"
+            submission_information:"{\"add_id_info_limits_tracking\":false,\"add_id_info_serves_ads\":false,\"add_id_info_tracks_action\":false,\"add_id_info_tracks_install\":false,\"add_id_info_uses_idfa\":false,\"content_rights_has_rights\":true,\"content_rights_contains_third_party_content\":false,\"export_compliance_platform\":\"ios\",\"export_compliance_compliance_required\":false,\"export_compliance_encryption_updated\":false,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":true,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":true,\"age_rating_cartoon_fantasy_violence\":0,\"age_rating_realistic_violence\":0,\"age_rating_prolonged_graphic_sadistic_realistic_violence\":0,\"age_rating_profanity_crude_humor\":0,\"age_rating_mature_suggestive\":0,\"age_rating_horror\":0,\"age_rating_medical_treatment_info\":0,\"age_rating_alcohol_tobacco_drugs\":0,\"age_rating_gambling\":0,\"age_rating_sexual_content_nudity\":0,\"age_rating_graphic_sexual_content_nudity\":0,\"age_rating_unrestricted_web_access\":false,\"age_rating_gambling_contests\":false}"
             
           echo "✅ Upload and metadata completed!"
         else
