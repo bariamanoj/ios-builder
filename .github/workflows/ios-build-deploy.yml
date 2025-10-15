@@ -102,18 +102,19 @@ jobs:
           lane :setup_metadata do |options|
             # Create app if it doesn't exist
             produce(
-              app_name: options[:app_name] || "MyApp",
-              app_identifier: options[:bundle_id] || "com.example.app",
+              username: "dohrasanket@gmail.com",
+              app_name: "ManzTestApp2025",
+              app_identifier: "com.san.mainAp",
               language: "en-US",
               app_version: ENV["VERSION_NUMBER"] || "1.0",
-              sku: "#{options[:bundle_id].gsub('.', '-')}-#{Time.now.to_i}",
+              sku: "com-san-mainAp-#{Time.now.to_i}",
               skip_itc: false,
               skip_devcenter: false
             )
             
             # Upload metadata
             deliver(
-              app_identifier: options[:bundle_id],
+              app_identifier: "com.san.mainAp",
               app_version: ENV["VERSION_NUMBER"] || "1.0",
               description: {
                 "en-US" => ENV["APP_DESCRIPTION"] || "Sample app description"
@@ -222,7 +223,7 @@ jobs:
         EOF
         
         fastlane build_and_sign
-        fastlane setup_metadata app_name:"${{ github.event.inputs.app_name }}" bundle_id:"com.san.mainAp"
+        fastlane setup_metadata
         
       env:
         FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
