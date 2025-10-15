@@ -15,7 +15,6 @@ on:
         description: 'Bundle identifier'
         required: true
         type: string
-      # App Metadata
       category:
         description: 'App category'
         required: false
@@ -33,47 +32,16 @@ on:
         description: 'Copyright text'
         required: false
         type: string
-      marketing_url:
-        description: 'Marketing URL'
-        required: false
-        type: string
       privacy_policy_url:
         description: 'Privacy policy URL'
         required: false
         type: string
-      price_tier:
-        description: 'Price tier'
-        required: false
-        type: string
-        default: '0'
-      version_whats_new:
-        description: 'Version release notes'
-        required: false
-        type: string
-      version_number:
-        description: 'Version number'
-        required: false
-        type: string
-        default: '1.0'
-      # Review Info
       first_name:
         description: 'Review contact first name'
         required: false
         type: string
-      last_name:
-        description: 'Review contact last name'
-        required: false
-        type: string
-      phone_number:
-        description: 'Review contact phone'
-        required: false
-        type: string
       email:
         description: 'Review contact email'
-        required: false
-        type: string
-      review_notes:
-        description: 'Review notes'
         required: false
         type: string
 
@@ -264,22 +232,22 @@ jobs:
         APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
         APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
-        # App Metadata
+        # App Metadata (using inputs + hardcoded defaults)
         APP_CATEGORY: ${{ github.event.inputs.category }}
         APP_DESCRIPTION: ${{ github.event.inputs.description }}
         APP_KEYWORDS: ${{ github.event.inputs.keywords }}
         APP_COPYRIGHT: ${{ github.event.inputs.copyright }}
-        MARKETING_URL: ${{ github.event.inputs.marketing_url }}
+        MARKETING_URL: "https://dohrasanket.pages.dev/"
         PRIVACY_POLICY_URL: ${{ github.event.inputs.privacy_policy_url }}
-        PRICE_TIER: ${{ github.event.inputs.price_tier }}
-        VERSION_WHATS_NEW: ${{ github.event.inputs.version_whats_new }}
-        VERSION_NUMBER: ${{ github.event.inputs.version_number }}
-        # Review Info
+        PRICE_TIER: "0"
+        VERSION_WHATS_NEW: "Initial release"
+        VERSION_NUMBER: "1.0"
+        # Review Info (using inputs + hardcoded defaults)
         REVIEW_FIRST_NAME: ${{ github.event.inputs.first_name }}
-        REVIEW_LAST_NAME: ${{ github.event.inputs.last_name }}
-        REVIEW_PHONE: ${{ github.event.inputs.phone_number }}
+        REVIEW_LAST_NAME: "DOHRA"
+        REVIEW_PHONE: "+91 9265171259"
         REVIEW_EMAIL: ${{ github.event.inputs.email }}
-        REVIEW_NOTES: ${{ github.event.inputs.review_notes }}
+        REVIEW_NOTES: "This is a sample demo app for testing purposes."
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
