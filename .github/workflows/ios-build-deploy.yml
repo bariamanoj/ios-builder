@@ -15,34 +15,21 @@ on:
         description: 'Bundle identifier'
         required: true
         type: string
-      category:
-        description: 'App category'
-        required: false
+      contact_first_name:
+        description: 'Contact First Name'
+        required: true
         type: string
-        default: 'UTILITIES'
-      description:
-        description: 'App description'
-        required: false
+      contact_last_name:
+        description: 'Contact Last Name'
+        required: true
         type: string
-      keywords:
-        description: 'App keywords'
-        required: false
+      contact_phone:
+        description: 'Contact Phone Number'
+        required: true
         type: string
-      copyright:
-        description: 'Copyright text'
-        required: false
-        type: string
-      privacy_policy_url:
-        description: 'Privacy policy URL'
-        required: false
-        type: string
-      first_name:
-        description: 'Review contact first name'
-        required: false
-        type: string
-      email:
-        description: 'Review contact email'
-        required: false
+      contact_email:
+        description: 'Contact Email'
+        required: true
         type: string
 
 jobs:
@@ -69,101 +56,17 @@ jobs:
     - name: Install Fastlane
       run: gem install fastlane
 
-    - name: Build and Setup App Store Metadata
+    - name: Build and Setup App Store
       run: |
-        echo "🔐 Building with complete App Store automation"
+        echo "🔐 Building ManzTestApp2025 v1.1 for App Store distribution"
         
         mkdir -p fastlane
         cat > fastlane/Fastfile << 'EOF'
         default_platform(:ios)
 
         platform :ios do
-          desc "Add export compliance key to Info.plist"
-          lane :add_compliance_key do |options|
-            info_plist_path = nil
-            
-            if Dir.glob("**/Info.plist").any?
-              info_plist_path = Dir.glob("**/Info.plist").find { |path| !path.include?('build') && !path.include?('Pods') }
-            end
-            
-            if info_plist_path && File.exist?(info_plist_path)
-              set_info_plist_value(
-                path: info_plist_path,
-                key: "ITSAppUsesNonExemptEncryption",
-                value: false
-              )
-              UI.success("Added export compliance key to #{info_plist_path}")
-            else
-              UI.message("Info.plist not found, compliance will be handled during upload")
-            end
-          end
-
-          desc "Setup App Store Connect metadata"
-          lane :setup_metadata do |options|
-            # Create app if it doesn't exist
-            produce(
-              username: "dohrasanket@gmail.com",
-              app_name: "ManzTestApp2025",
-              app_identifier: "com.san.mainAp",
-              language: "en-US",
-              app_version: ENV["VERSION_NUMBER"] || "1.0",
-              sku: "com-san-mainAp-#{Time.now.to_i}",
-              skip_itc: false,
-              skip_devcenter: false
-            )
-            
-            # Upload metadata
-            deliver(
-              username: "dohrasanket@gmail.com",
-              app_identifier: "com.san.mainAp",
-              app_version: ENV["VERSION_NUMBER"] || "1.0",
-              description: {
-                "en-US" => ENV["APP_DESCRIPTION"] || "Sample app description"
-              },
-              keywords: {
-                "en-US" => ENV["APP_KEYWORDS"] || "app"
-              },
-              copyright: ENV["APP_COPYRIGHT"] || "2025 Company",
-              marketing_url: {
-                "en-US" => ENV["MARKETING_URL"]
-              },
-              privacy_url: {
-                "en-US" => ENV["PRIVACY_POLICY_URL"]
-              },
-              primary_category: ENV["APP_CATEGORY"] || "UTILITIES",
-              price_tier: ENV["PRICE_TIER"] || "0",
-              release_notes: {
-                "en-US" => ENV["VERSION_WHATS_NEW"] || "Bug fixes and improvements"
-              },
-              submission_information: {
-                add_id_info_limits_tracking: true,
-                add_id_info_serves_ads: false,
-                add_id_info_tracks_action: false,
-                add_id_info_tracks_install: false,
-                add_id_info_uses_idfa: false,
-                content_rights_has_rights: true,
-                content_rights_contains_third_party_content: false,
-                export_compliance_platform: "ios",
-                export_compliance_compliance_required: false,
-                export_compliance_encryption_updated: false,
-                export_compliance_app_type: nil,
-                export_compliance_uses_encryption: false,
-                export_compliance_is_exempt: true,
-                export_compliance_contains_third_party_cryptography: false,
-                export_compliance_contains_proprietary_cryptography: false,
-                export_compliance_available_on_french_store: true
-              },
-              skip_screenshots: true,
-              skip_metadata: false,
-              force: true,
-              overwrite_screenshots: false
-            )
-          end
-
           desc "Build with Fastlane automatic provisioning"
           lane :build_and_sign do
-            add_compliance_key
-            
             app_store_connect_api_key(
               key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
               issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
@@ -211,15 +114,14 @@ jobs:
                 signingStyle: "manual"
               },
               output_directory: "./build/ipa",
-              output_name: "ManzTestApp2025.ipa",
-              archive_path: "./build/archive/ManzTestApp2025.xcarchive"
+              output_name: "ManzTestApp2025_v1.1.ipa",
+              archive_path: "./build/archive/ManzTestApp2025_v1.1.xcarchive"
             )
           end
         end
         EOF
         
         fastlane build_and_sign
-        fastlane setup_metadata
         
       env:
         FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
@@ -229,22 +131,6 @@ jobs:
         APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
         APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
-        # App Metadata (using inputs + hardcoded defaults)
-        APP_CATEGORY: ${{ github.event.inputs.category }}
-        APP_DESCRIPTION: ${{ github.event.inputs.description }}
-        APP_KEYWORDS: ${{ github.event.inputs.keywords }}
-        APP_COPYRIGHT: ${{ github.event.inputs.copyright }}
-        MARKETING_URL: "https://dohrasanket.pages.dev/"
-        PRIVACY_POLICY_URL: ${{ github.event.inputs.privacy_policy_url }}
-        PRICE_TIER: "0"
-        VERSION_WHATS_NEW: "Initial release"
-        VERSION_NUMBER: "1.0"
-        # Review Info (using inputs + hardcoded defaults)
-        REVIEW_FIRST_NAME: ${{ github.event.inputs.first_name }}
-        REVIEW_LAST_NAME: "DOHRA"
-        REVIEW_PHONE: "+91 9265171259"
-        REVIEW_EMAIL: ${{ github.event.inputs.email }}
-        REVIEW_NOTES: "This is a sample demo app for testing purposes."
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
@@ -253,9 +139,9 @@ jobs:
         path: build/
         if-no-files-found: warn
 
-    - name: Submit to App Store for Review
+    - name: Upload to App Store
       run: |
-        echo "🚀 Submitting to App Store for review"
+        echo "🚀 Uploading to App Store for distribution"
         
         IPA_FILE=$(find build/ipa -name "*.ipa" | head -1)
         
@@ -264,15 +150,16 @@ jobs:
           
           fastlane run upload_to_app_store \
             ipa:"$IPA_FILE" \
-            username:"dohrasanket@gmail.com" \
+            username:"${{ github.event.inputs.contact_email }}" \
             skip_screenshots:true \
             skip_metadata:true \
-            skip_app_version_update:true \
             submit_for_review:true \
             automatic_release:true \
-            force:true
+            force:true \
+            submission_information:"{\"add_id_info_limits_tracking\":true,\"add_id_info_serves_ads\":false,\"add_id_info_tracks_action\":true,\"add_id_info_tracks_install\":true,\"add_id_info_uses_idfa\":true,\"content_rights_has_rights\":true,\"content_rights_contains_third_party_content\":false,\"export_compliance_platform\":\"ios\",\"export_compliance_compliance_required\":false,\"export_compliance_encryption_updated\":false,\"export_compliance_app_type\":null,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":false,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":false}" \
+            app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"demo_account_name\":\"\",\"demo_account_password\":\"\",\"notes\":\"Automated build and submission for ManzTestApp2025 v1.1\"}"
             
-          echo "✅ Submitted for App Store review!"
+          echo "✅ Upload completed!"
         else
           echo "⚠️ No IPA found to upload"
         fi

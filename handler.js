@@ -15,9 +15,18 @@ exports.handler = async (event) => {
       params = event;
     }
     
-    const { repo_url, app_name, bundle_identifier } = params;
+    const { 
+      repo_url, 
+      app_name, 
+      bundle_identifier,
+      contact_first_name,
+      contact_last_name,
+      contact_phone,
+      contact_email
+    } = params;
     
     console.log(`Triggering build for: ${app_name} (${bundle_identifier})`);
+    console.log(`Contact: ${contact_first_name} ${contact_last_name} - ${contact_email}`);
     
     const response = await axios.post(
       `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/ios-build-deploy.yml/dispatches`,
@@ -26,7 +35,11 @@ exports.handler = async (event) => {
         inputs: {
           repo_url: repo_url,
           app_name: app_name,
-          bundle_identifier: bundle_identifier
+          bundle_identifier: bundle_identifier,
+          contact_first_name: contact_first_name || "SANKETKUMAR",
+          contact_last_name: contact_last_name || "DOHRA",
+          contact_phone: contact_phone || "+91 9265171259",
+          contact_email: contact_email || "dohrasanket@gmail.com"
         }
       },
       {
@@ -43,7 +56,8 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         message: "iOS build workflow triggered successfully",
         app_name,
-        bundle_identifier
+        bundle_identifier,
+        contact: `${contact_first_name} ${contact_last_name}`
       })
     };
 
