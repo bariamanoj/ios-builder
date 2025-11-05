@@ -201,15 +201,16 @@ jobs:
             force:true \
             description:"{\"en-US\":\"${{ github.event.inputs.app_description }}\"}" \
             keywords:"{\"en-US\":\"ManzzPlusApp\"}" \
-            copyright:"@ManzzPlusApp 2025" \
+            copyright:"© 2025 ManzzPlusApp" \
             marketing_url:"{\"en-US\":\"${{ github.event.inputs.support_url }}\"}" \
             privacy_url:"{\"en-US\":\"${{ github.event.inputs.privacy_policy_url }}\"}" \
             support_url:"{\"en-US\":\"${{ github.event.inputs.support_url }}\"}" \
             primary_category:"UTILITIES" \
-            app_rating_config_path:"./age_rating.json" \
-            app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"demo_account_name\":\"\",\"demo_account_password\":\"\",\"notes\":\"Contact information for ManzTestApp2025\"}" \
-            submission_information:"{\"add_id_info_limits_tracking\":false,\"add_id_info_serves_ads\":false,\"add_id_info_tracks_action\":false,\"add_id_info_tracks_install\":false,\"add_id_info_uses_idfa\":false,\"content_rights_has_rights\":true,\"content_rights_contains_third_party_content\":false,\"export_compliance_platform\":\"ios\",\"export_compliance_compliance_required\":false,\"export_compliance_encryption_updated\":false,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":true,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":true}" \
-            price_tier:0
+            app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"notes\":\"Contact for ${{ github.event.inputs.app_name }}\"}" \
+            submission_information:"{\"add_id_info_uses_idfa\":false,\"content_rights_has_rights\":true,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":true,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":true}" \
+            price_tier:0 \
+            available_in_all_territories:true \
+            app_price_tier:0
             
           echo "✅ Upload and metadata completed!"
           
