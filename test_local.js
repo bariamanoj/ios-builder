@@ -1,19 +1,25 @@
 const { handler } = require('./handler');
 const fs = require('fs');
 
-// Test the Lambda function locally
-async function test() {
-  console.log('🧪 Testing Lambda function locally...');
-  
-  // Read test event from event.json
-  const testEvent = JSON.parse(fs.readFileSync('./event.json', 'utf8'));
-  
-  try {
-    const result = await handler(testEvent);
-    console.log('✅ Result:', JSON.parse(result.body));
-  } catch (error) {
-    console.log('❌ Error:', error.message);
-  }
+// Set GitHub token from environment variable
+// Usage: GH_TOKEN=your_token_here node test_local.js
+if (!process.env.GH_TOKEN) {
+  console.error('❌ Please set GH_TOKEN environment variable');
+  process.exit(1);
 }
 
-test();
+console.log('🔑 GitHub Token:', process.env.GH_TOKEN.substring(0, 10) + '...');
+
+// Read event data
+const event = JSON.parse(fs.readFileSync('./event.json', 'utf8'));
+
+console.log('🚀 Testing Lambda function locally...');
+console.log('📋 Event data:', JSON.stringify(event, null, 2));
+
+handler(event)
+  .then(result => {
+    console.log('✅ Success:', result);
+  })
+  .catch(error => {
+    console.error('❌ Error:', error);
+  });
