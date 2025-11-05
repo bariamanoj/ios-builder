@@ -125,6 +125,44 @@ platform :ios do
         export_compliance_contains_third_party_cryptography: false,
         export_compliance_contains_proprietary_cryptography: false,
         export_compliance_available_on_french_store: false
+      },
+      app_privacy_data_collection: {
+        collects_data: true,
+        data_types: [
+          {
+            category: "identifiers",
+            types: [
+              {
+                type: "device_id",
+                purposes: ["analytics", "app_functionality"],
+                linked_to_user: true,
+                used_for_tracking: true
+              }
+            ]
+          },
+          {
+            category: "usage_data", 
+            types: [
+              {
+                type: "usage_data",
+                purposes: ["analytics", "app_functionality"],
+                linked_to_user: true,
+                used_for_tracking: true
+              }
+            ]
+          },
+          {
+            category: "advertising_data",
+            types: [
+              {
+                type: "advertising_data", 
+                purposes: ["analytics", "app_functionality"],
+                linked_to_user: true,
+                used_for_tracking: true
+              }
+            ]
+          }
+        ]
       }
     )
   end

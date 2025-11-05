@@ -84,7 +84,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/GithubAction/live/1760336498190-2025-10-13T06:21:38.190Z/GithubAction.zip"
+          "S3Key": "serverless/GithubAction/live/1760525911156-2025-10-15T10:58:31.156Z/GithubAction.zip"
         },
         "Handler": "handler.handler",
         "Runtime": "nodejs18.x",
@@ -93,7 +93,7 @@
         "Timeout": 30,
         "Environment": {
           "Variables": {
-            "GITHUB_TOKEN": "",
+            "GITHUB_TOKEN": "ghp_your_token_here",
             "GITHUB_OWNER": "bariamanoj",
             "GITHUB_REPO": "ios-builder"
           }
@@ -114,14 +114,14 @@
         "ApiLogGroup"
       ]
     },
-    "ApiLambdaVersionIMG82RolEC82CC65JwWH0yZ5jTpVWZORYei2BuX10": {
+    "ApiLambdaVersionmeFQuJpik1TU0ZYqprDstBFaSzCPoIqaVvmVyZ1ug": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "ApiLambdaFunction"
         },
-        "CodeSha256": "NdBSOM1AzLiSV53bqPnNzoO7VmUO0D50mNHm4LWBnfQ="
+        "CodeSha256": "G+8Hb+/0hTLBcGQWjat9sgmfXumAug0Eu6m30r76f0E="
       }
     }
   },
@@ -137,7 +137,7 @@
     "ApiLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "ApiLambdaVersionIMG82RolEC82CC65JwWH0yZ5jTpVWZORYei2BuX10"
+        "Ref": "ApiLambdaVersionmeFQuJpik1TU0ZYqprDstBFaSzCPoIqaVvmVyZ1ug"
       },
       "Export": {
         "Name": "sls-GithubAction-live-ApiLambdaFunctionQualifiedArn"
