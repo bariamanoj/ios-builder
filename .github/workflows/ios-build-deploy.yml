@@ -191,24 +191,7 @@ jobs:
           
           echo "📝 Setting complete metadata and contact information"
           
-          cat > age_rating.json << 'EOF'
-          {
-            "violenceCartoonOrFantasy": "NONE",
-            "violenceRealistic": "NONE",
-            "violenceRealisticProlongedGraphicOrSadistic": "NONE",
-            "profanityOrCrudeHumor": "NONE",
-            "matureOrSuggestiveThemes": "NONE",
-            "horrorOrFearThemes": "NONE",
-            "medicalOrTreatmentInformation": "NONE",
-            "alcoholTobaccoOrDrugUseOrReferences": "NONE",
-            "gamblingSimulated": "NONE",
-            "sexualContentOrNudity": "NONE",
-            "sexualContentGraphicAndNudity": "NONE",
-            "unrestrictedWebAccess": "NONE",
-            "gambling": "NONE",
-            "contests": "NONE"
-          }
-          EOF
+          echo '{"violenceCartoonOrFantasy":"NONE","violenceRealistic":"NONE","violenceRealisticProlongedGraphicOrSadistic":"NONE","profanityOrCrudeHumor":"NONE","matureOrSuggestiveThemes":"NONE","horrorOrFearThemes":"NONE","medicalOrTreatmentInformation":"NONE","alcoholTobaccoOrDrugUseOrReferences":"NONE","gamblingSimulated":"NONE","sexualContentOrNudity":"NONE","sexualContentGraphicAndNudity":"NONE","unrestrictedWebAccess":"NONE","gambling":"NONE","contests":"NONE"}' > age_rating.json
           
           echo '[{"category":"DEVICE_ID","purposes":["ANALYTICS","APP_FUNCTIONALITY"],"data_protections":["DATA_LINKED_TO_YOU","DATA_USED_TO_TRACK_YOU"]},{"category":"ADVERTISING_DATA","purposes":["ANALYTICS","APP_FUNCTIONALITY"],"data_protections":["DATA_LINKED_TO_YOU","DATA_USED_TO_TRACK_YOU"]}]' > privacy_data.json
           
