@@ -192,7 +192,7 @@ jobs:
           
           echo '{"CARTOON_FANTASY_VIOLENCE":0,"REALISTIC_VIOLENCE":0,"PROLONGED_GRAPHIC_SADISTIC_REALISTIC_VIOLENCE":0,"PROFANITY_CRUDE_HUMOR":0,"MATURE_SUGGESTIVE":0,"HORROR":0,"MEDICAL_TREATMENT_INFO":0,"ALCOHOL_TOBACCO_DRUGS":0,"GAMBLING":0,"SEXUAL_CONTENT_NUDITY":0,"GRAPHIC_SEXUAL_CONTENT_NUDITY":0,"UNRESTRICTED_WEB_ACCESS":false,"GAMBLING_CONTESTS":false}' > age_rating.json
           
-          echo '[{"category":"DEVICE_ID","purposes":["ANALYTICS","APP_FUNCTIONALITY"],"data_protections":["DATA_LINKED_TO_YOU","DATA_USED_TO_TRACK_YOU"]},{"category":"OTHER_USAGE_DATA","purposes":["ANALYTICS","APP_FUNCTIONALITY"],"data_protections":["DATA_LINKED_TO_YOU","DATA_USED_TO_TRACK_YOU"]},{"category":"ADVERTISING_DATA","purposes":["ANALYTICS","APP_FUNCTIONALITY"],"data_protections":["DATA_LINKED_TO_YOU","DATA_USED_TO_TRACK_YOU"]}]' > privacy_data.json
+          echo '[{"category":"DEVICE_ID","purposes":["ANALYTICS","APP_FUNCTIONALITY"],"data_protections":["DATA_LINKED_TO_YOU","DATA_USED_TO_TRACK_YOU"]},{"category":"ADVERTISING_DATA","purposes":["ANALYTICS","APP_FUNCTIONALITY"],"data_protections":["DATA_LINKED_TO_YOU","DATA_USED_TO_TRACK_YOU"]}]' > privacy_data.json
           
           fastlane run deliver \
             username:"${{ github.event.inputs.contact_email }}" \
