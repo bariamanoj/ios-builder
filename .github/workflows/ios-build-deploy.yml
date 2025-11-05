@@ -143,7 +143,7 @@ jobs:
             
             # Privacy settings may require manual confirmation in App Store Connect
             # as full API support is limited. This uploads what we can.
-            UI.important("Privacy data collection settings uploaded via deliver. Confirm manually if needed:")
+            UI.important("Privacy data collection settings uploaded via upload_app_privacy_details_to_app_store. Confirm manually if needed:")
             UI.message("1. Go to App Store Connect > Your App > App Privacy")
             UI.message("2. Set 'Data Collection' to 'Yes, we collect data from this app'")
             UI.message("3. Add these data types:")
@@ -192,7 +192,7 @@ jobs:
           
           echo '{"CARTOON_FANTASY_VIOLENCE":0,"REALISTIC_VIOLENCE":0,"PROLONGED_GRAPHIC_SADISTIC_REALISTIC_VIOLENCE":0,"PROFANITY_CRUDE_HUMOR":0,"MATURE_SUGGESTIVE":0,"HORROR":0,"MEDICAL_TREATMENT_INFO":0,"ALCOHOL_TOBACCO_DRUGS":0,"GAMBLING":0,"SEXUAL_CONTENT_NUDITY":0,"GRAPHIC_SEXUAL_CONTENT_NUDITY":0,"UNRESTRICTED_WEB_ACCESS":false,"GAMBLING_CONTESTS":false}' > age_rating.json
           
-          echo '{"data_collection":{"collects_data":true,"data_types":[{"category":"identifiers","types":[{"type":"device_id","purposes":["analytics","app_functionality"],"linked_to_user":true,"used_for_tracking":true}]},{"category":"usage_data","types":[{"type":"usage_data","purposes":["analytics","app_functionality"],"linked_to_user":true,"used_for_tracking":true}]},{"category":"advertising_data","types":[{"type":"advertising_data","purposes":["analytics","app_functionality"],"linked_to_user":true,"used_for_tracking":true}]}]}}' > privacy_data.json
+          echo '[{"category":"DEVICE_ID","purposes":["ANALYTICS","APP_FUNCTIONALITY"],"data_protections":["DATA_LINKED_TO_YOU","DATA_USED_TO_TRACK_YOU"]},{"category":"OTHER_USAGE_DATA","purposes":["ANALYTICS","APP_FUNCTIONALITY"],"data_protections":["DATA_LINKED_TO_YOU","DATA_USED_TO_TRACK_YOU"]},{"category":"ADVERTISING_DATA","purposes":["ANALYTICS","APP_FUNCTIONALITY"],"data_protections":["DATA_LINKED_TO_YOU","DATA_USED_TO_TRACK_YOU"]}]' > privacy_data.json
           
           fastlane run deliver \
             username:"${{ github.event.inputs.contact_email }}" \
@@ -226,3 +226,15 @@ jobs:
         APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
         APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+
+    - name: Upload App Privacy Details
+      run: |
+        fastlane run upload_app_privacy_details_to_app_store \
+          username:"${{ github.event.inputs.contact_email }}" \
+          team_name:"Sanket Dohra" \
+          app_identifier:"com.san.mainAp" \
+          json_path:"./privacy_data.json"
+      env:
+        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        FASTLANE_PASSWORD: "Sanket_4392"
+        FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
