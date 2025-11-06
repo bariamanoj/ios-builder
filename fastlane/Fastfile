@@ -1,155 +1,202 @@
 default_platform(:ios)
 
 platform :ios do
-  desc "Build with Fastlane automatic provisioning"
-  lane :build_and_sign do
-    app_store_connect_api_key(
-      key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
-      issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
-      key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"],
-      duration: 1200,
-      in_house: false
-    )
+  desc "Build and archive iOS app"
+  lane :build_archive do |options|
+    app_name = options[:app_name] || "MyApp"
+    bundle_id = options[:bundle_id] || "com.example.app"
+    
+    # Find project/workspace
+    if Dir.glob("*.xcworkspace").any?
+      workspace = Dir.glob("*.xcworkspace").first
+      scheme = File.basename(workspace, ".xcworkspace")
+      
+      build_app(
+        workspace: workspace,
+        scheme: scheme,
+        configuration: "Release",
+        export_method: "development",
+        skip_codesigning: true,
+        archive_path: "./build/#{scheme}.xcarchive",
+        output_directory: "./build/ipa",
+        output_name: "#{app_name}.ipa"
+      )
+    elsif Dir.glob("*.xcodeproj").any?
+      project = Dir.glob("*.xcodeproj").first
+      scheme = File.basename(project, ".xcodeproj")
+      
+      build_app(
+        project: project,
+        scheme: scheme,
+        configuration: "Release",
+        export_method: "development",
+        skip_codesigning: true,
+        archive_path: "./build/#{scheme}.xcarchive",
+        output_directory: "./build/ipa",
+        output_name: "#{app_name}.ipa"
+      )
+    end
+  end
 
-    create_keychain(
-      name: "fastlane_tmp_keychain",
-      password: "temppassword123",
-      default_keychain: true,
-      unlock: true,
-      timeout: 3600,
-      lock_when_sleeps: false
-    )
-
-    match(
-      type: "appstore",
-      app_identifier: "com.san.mainAp",
-      git_url: "https://github.com/bariamanoj/ios-certificates-new",
-      username: "dohrasanket@gmail.com",
-      team_id: "42FLQUC3A9",
-      readonly: false,
-      keychain_name: "fastlane_tmp_keychain",
-      keychain_password: "temppassword123"
-    )
-
-    update_project_provisioning(
-      xcodeproj: "NewAppSample.xcodeproj",
-      target_filter: "NewAppSample",
-      profile: ENV["sigh_com.san.mainAp_appstore_profile-path"],
-      code_signing_identity: "iPhone Distribution"
-    )
-
-    gym(
-      configuration: "Release",
-      export_method: "app-store",
-      sdk: "iphoneos",
-      export_options: {
-        method: "app-store",
-        teamID: "42FLQUC3A9",
-        uploadBitcode: false,
-        uploadSymbols: true,
-        signingStyle: "manual"
-      },
-      output_directory: "./build/ipa",
-      output_name: "#{ENV['APP_NAME'] || 'ManzTestApp2025'}_v1.1.ipa",
-      archive_path: "./build/archive/#{ENV['APP_NAME'] || 'ManzTestApp2025'}_v1.1.xcarchive"
+  desc "Create app on App Store Connect"
+  lane :create_app do |options|
+    app_name = options[:app_name] || "MyApp"
+    bundle_id = options[:bundle_id] || "com.example.app"
+    
+    produce(
+      app_name: app_name,
+      app_identifier: bundle_id,
+      language: "en-US",
+      app_version: "1.0",
+      sku: "#{bundle_id.gsub('.', '-')}-#{Time.now.to_i}",
+      skip_itc: false,
+      skip_devcenter: false
     )
   end
 
-  desc "Upload to TestFlight and configure metadata + pricing"
-  lane :upload_and_configure do |options|
-    # Upload to TestFlight
-    pilot(
-      ipa: Dir.glob("./build/ipa/*.ipa").first,
-      username: options[:contact_email] || "dohrasanket@gmail.com",
-      app_identifier: "com.san.mainAp",
-      skip_waiting_for_build_processing: true
-    )
+  desc "Upload IPA to App Store Connect"
+  lane :upload_ipa do |options|
+    ipa_path = options[:ipa_path] || Dir.glob("./build/ipa/*.ipa").first
+    
+    if ipa_path && File.exist?(ipa_path)
+      upload_to_app_store(
+        ipa: ipa_path,
+        skip_screenshots: true,
+        skip_metadata: true,
+        skip_app_version_update: true,
+        force: true,
+        precheck_include_in_app_purchases: false
+      )
+    else
+      UI.error("No IPA file found at #{ipa_path}")
+    end
+  end
 
-    # Upload metadata
+  desc "Upload metadata to App Store Connect"
+  lane :upload_metadata do |options|
     deliver(
-      username: options[:contact_email] || "dohrasanket@gmail.com",
-      app_identifier: "com.san.mainAp",
+      app_identifier: options[:bundle_id] || "com.san.mainAp",
+      metadata_path: "./metadata",
+      screenshots_path: "./screenshots",
       skip_binary_upload: true,
       skip_screenshots: true,
       force: true,
-      description: { "en-US" => options[:app_description] || "This is a sample utility app." },
-      name: { "en-US" => options[:app_name] || "ManzTestApp2025" },
-      keywords: { "en-US" => "utility, free, app" },
-      copyright: "© 2025 #{options[:app_name] || 'ManzTestApp2025'}",
-      marketing_url: { "en-US" => options[:support_url] || "https://manzz.app" },
-      privacy_url: { "en-US" => options[:privacy_policy_url] || "https://manzz.app/privacy" },
-      support_url: { "en-US" => options[:support_url] || "https://manzz.app/support" },
+      overwrite_screenshots: false,
+      submit_for_review: false,
+      automatic_release: false,
+      skip_app_version_update: true,
+      app_version: "1.0",
+      copyright: "@ManzzPlusApp",
       primary_category: "UTILITIES",
+      price_tier: 0, # <-- UPDATED: Sets the app price to Free.
+      keywords: {
+        "en-US" => "ManzzPlusApp"
+      },
+      description: {
+        "en-US" => options[:description] || "ManzTestApp2025 - A utility application"
+      },
+      name: {
+        "en-US" => options[:app_name] || "ManzTestApp2025"
+      },
+      support_url: {
+        "en-US" => "https://manzz.app/support"
+      },
+      marketing_url: {
+        "en-US" => "https://manzz.app"
+      },
+      privacy_url: {
+        "en-US" => "https://manzz.app/privacy"
+      },
       app_review_information: {
-        first_name: options[:contact_first_name] || "SANKETKUMAR",
-        last_name: options[:contact_last_name] || "DOHRA",
-        phone_number: options[:contact_phone] || "+91 9265171259",
-        email_address: options[:contact_email] || "dohrasanket@gmail.com",
-        notes: "Contact for #{options[:app_name] || 'ManzTestApp2025'}"
+        contact_email: "dohrasanket@gmail.com",
+        contact_first_name: "SANKETKUMAR",
+        contact_last_name: "DOHRA",
+        contact_phone: "+91 9265171259",
+        demo_account_name: "",
+        demo_account_password: "",
+        notes: "Test app for ManzTestApp2025"
       },
       submission_information: {
-        add_id_info_uses_idfa: false,
-        content_rights_has_rights: true,
+        export_compliance_platform: "ios",
+        export_compliance_compliance_required: false,
+        export_compliance_encryption_updated: false,
+        export_compliance_app_type: nil,
         export_compliance_uses_encryption: false,
         export_compliance_is_exempt: true,
         export_compliance_contains_third_party_cryptography: false,
         export_compliance_contains_proprietary_cryptography: false,
-        export_compliance_available_on_french_store: true
+        export_compliance_available_on_french_store: false
+      },
+      app_privacy_data_collection: {
+        collects_data: true,
+        data_types: [
+          {
+            category: "identifiers",
+            types: [
+              {
+                type: "device_id",
+                purposes: ["analytics", "app_functionality"],
+                linked_to_user: true,
+                used_for_tracking: true
+              }
+            ]
+          },
+          {
+            category: "usage_data", 
+            types: [
+              {
+                type: "usage_data",
+                purposes: ["analytics", "app_functionality"],
+                linked_to_user: true,
+                used_for_tracking: true
+              }
+            ]
+          },
+          {
+            category: "advertising_data",
+            types: [
+              {
+                type: "advertising_data", 
+                purposes: ["analytics", "app_functionality"],
+                linked_to_user: true,
+                used_for_tracking: true
+              }
+            ]
+          }
+        ]
       }
     )
-
-    # Set app to FREE in every country
-    set_free_worldwide
   end
 
-  desc "Set app to FREE in every country"
-  lane :set_free_worldwide do
+  desc "Update privacy details"
+  lane :update_privacy_details do
     require 'spaceship'
-
+    
     app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
       issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
       key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
     )
-
+    
+    # Get app ID
     app = Spaceship::ConnectAPI::App.find("com.san.mainAp")
-    UI.user_error!("App not found!") unless app
-
-    # Get or create price schedule
-    price_schedule_resp = app.get_app_price_schedule
-    price_schedule = price_schedule_resp.first
-
-    unless price_schedule
-      UI.message("Creating new price schedule...")
-      base_territory = Spaceship::ConnectAPI::Territory.all.find { |t| t.currency == 'USD' }
-      price_schedule = app.create_app_price_schedule(base_territory_id: base_territory.id)
-    else
-      UI.message("Using existing price schedule.")
-    end
-
-    # Free tier (Tier 0)
-    free_tier = Spaceship::ConnectAPI::AppPriceTier.all.find { |t| t.price == 0.0 }
-    UI.user_error!("Free price tier not found!") unless free_tier
-    UI.message("Using Free Tier: #{free_tier.tier_stem}")
-
-    # All territories
-    territories = Spaceship::ConnectAPI::Territory.all
-    UI.message("Found #{territories.count} territories")
-
-    # Build manual prices
-    manual_prices = territories.map do |t|
-      { territory_id: t.id, price_tier_id: free_tier.id }
-    end
-
-    # Apply
-    price_schedule.patch(manual_prices: manual_prices)
-
-    UI.success("FREE in #{territories.count} territories!")
+    
+    # Privacy settings need to be configured manually in App Store Connect
+    # as there's no direct API support for privacy data collection settings yet
+    UI.important("Privacy data collection settings must be configured manually in App Store Connect:")
+    UI.message("1. Go to App Store Connect > Your App > App Privacy")
+    UI.message("2. Set 'Data Collection' to 'Yes, we collect data from this app'")
+    UI.message("3. Add these data types:")
+    UI.message("   - Identifiers > Device ID (Analytics, App Functionality, Linked to User, Used for Tracking)")
+    UI.message("   - Usage Data (Analytics, App Functionality, Linked to User, Used for Tracking)")
+    UI.message("   - Advertising Data (Analytics, App Functionality, Linked to User, Used for Tracking)")
   end
 
-  desc "Full pipeline: build → upload → configure"
-  lane :full_deploy do |options|
-    build_and_sign
-    upload_and_configure(options)
+  desc "Complete build and upload process"
+  lane :build_and_upload do |options|
+    build_archive(options)
+    create_app(options)
+    upload_ipa(options)
+    upload_metadata(options)
   end
 end
