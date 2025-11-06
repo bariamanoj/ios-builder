@@ -212,68 +212,66 @@ jobs:
           # Set pricing using App Store Connect API directly
           ruby -e "
           require 'spaceship'
+          require 'json'
           
-          # Authenticate with API Key
+          # === Authenticate ===
           Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
             key_id: ENV['APP_STORE_CONNECT_API_KEY_KEY_ID'],
             issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],
             key: ENV['APP_STORE_CONNECT_API_KEY_KEY']
           )
           
-          # Find the app
-          app = Spaceship::ConnectAPI::App.find('com.san.mainAp')
-          if app.nil?
-            puts 'ERROR: App not found!'
+          bundle_id = 'com.san.mainAp'
+          
+          # === Find App ===
+          app = Spaceship::ConnectAPI::App.find(bundle_id)
+          unless app
+            puts \"ERROR: App with bundle ID #{bundle_id} not found!\"
             exit 1
           end
-          puts \"Found app: #{app.name} (#{app.id})\"
+          puts \"Found app: #{app.name} (ID: #{app.id})\"
           
-          # Get the current App Store version (needed to access pricing)
-          versions = app.get_app_store_versions(filter: { appStoreState: 'PREPARE_FOR_SUBMISSION' })
-          version = versions.first
+          # === Get App Price Schedule (via relationship) ===
+          price_schedules = app.get_app_price_schedules
+          price_schedule = price_schedules.first
           
-          if version.nil?
-            puts 'ERROR: No app version found in PREPARE_FOR_SUBMISSION state!'
-            exit 1
-          end
-          
-          puts \"Using version: #{version.version_string}\"
-          
-          # Get or create App Price Schedule
-          price_schedule = version.get_app_price_schedule
           if price_schedule.nil?
-            puts 'Creating new price schedule...'
+            puts 'No price schedule found. Creating one...'
+            # Create new schedule with base territory (USD)
             base_territory = Spaceship::ConnectAPI::Territory.all.find { |t| t.currency == 'USD' }
-            price_schedule = version.create_app_price_schedule(base_territory_id: base_territory.id)
+            price_schedule = app.create_app_price_schedule(base_territory_id: base_territory.id)
           else
-            puts 'Found existing price schedule, updating...'
+            puts 'Found existing price schedule.'
           end
           
-          # Fetch all territories
+          # === Get Free Price Tier (Tier 0) ===
+          price_tiers = Spaceship::ConnectAPI::AppPriceTier.all
+          free_tier = price_tiers.find { |tier| tier.price == 0.0 }
+          
+          if free_tier.nil?
+            puts 'ERROR: Free price tier not found!'
+            exit 1
+          end
+          puts \"Using Free Price Tier: #{free_tier.tier_stem} (#{free_tier.price} USD)\"
+          
+          # === Get All Territories ===
           territories = Spaceship::ConnectAPI::Territory.all
           puts \"Found #{territories.count} territories\"
           
-          # Prepare price tiers: Tier 0 = Free
-          free_price_tier = Spaceship::ConnectAPI::AppPriceTier.all.find { |tier| tier.price == 0.0 }
-          if free_price_tier.nil?
-            puts 'ERROR: Free price tier (0.0) not found!'
-            exit 1
-          end
-          
-          # Build manual prices for ALL territories
+          # === Build Manual Prices (Free in ALL) ===
           manual_prices = territories.map do |territory|
             {
               territory_id: territory.id,
-              price_tier_id: free_price_tier.id
+              price_tier_id: free_tier.id
             }
           end
           
-          # Update the price schedule
+          # === Update Price Schedule ===
           price_schedule.patch(
             manual_prices: manual_prices
           )
           
-          puts 'SUCCESS: App is now FREE in ALL territories!'
+          puts \"SUCCESS: App is now FREE in ALL #{territories.count} countries!\"
           "
           
           echo "SUCCESS: App configured as FREE and available in ALL countries!"
