@@ -207,74 +207,10 @@ jobs:
             app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"notes\":\"Contact for ${{ github.event.inputs.app_name }}\"}" \
             submission_information:"{\"add_id_info_uses_idfa\":false,\"content_rights_has_rights\":true,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":true,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":true}"
           
-          echo "Metadata uploaded successfully!"
-          
-          # Set pricing using App Store Connect API directly
-          ruby -e "
-          require 'spaceship'
-          require 'json'
-          
-          # === Authenticate ===
-          Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
-            key_id: ENV['APP_STORE_CONNECT_API_KEY_KEY_ID'],
-            issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],
-            key: ENV['APP_STORE_CONNECT_API_KEY_KEY']
-          )
-          
-          bundle_id = 'com.san.mainAp'
-          
-          # === Find App ===
-          app = Spaceship::ConnectAPI::App.find(bundle_id)
-          unless app
-            puts \"ERROR: App with bundle ID #{bundle_id} not found!\"
-            exit 1
-          end
-          puts \"Found app: #{app.name} (ID: #{app.id})\"
-          
-          # === Get App Price Schedule (via relationship) ===
-          price_schedules = app.get_app_price_schedules
-          price_schedule = price_schedules.first
-          
-          if price_schedule.nil?
-            puts 'No price schedule found. Creating one...'
-            # Create new schedule with base territory (USD)
-            base_territory = Spaceship::ConnectAPI::Territory.all.find { |t| t.currency == 'USD' }
-            price_schedule = app.create_app_price_schedule(base_territory_id: base_territory.id)
-          else
-            puts 'Found existing price schedule.'
-          end
-          
-          # === Get Free Price Tier (Tier 0) ===
-          price_tiers = Spaceship::ConnectAPI::AppPriceTier.all
-          free_tier = price_tiers.find { |tier| tier.price == 0.0 }
-          
-          if free_tier.nil?
-            puts 'ERROR: Free price tier not found!'
-            exit 1
-          end
-          puts \"Using Free Price Tier: #{free_tier.tier_stem} (#{free_tier.price} USD)\"
-          
-          # === Get All Territories ===
-          territories = Spaceship::ConnectAPI::Territory.all
-          puts \"Found #{territories.count} territories\"
-          
-          # === Build Manual Prices (Free in ALL) ===
-          manual_prices = territories.map do |territory|
-            {
-              territory_id: territory.id,
-              price_tier_id: free_tier.id
-            }
-          end
-          
-          # === Update Price Schedule ===
-          price_schedule.patch(
-            manual_prices: manual_prices
-          )
-          
-          puts \"SUCCESS: App is now FREE in ALL #{territories.count} countries!\"
-          "
-          
-          echo "SUCCESS: App configured as FREE and available in ALL countries!"
+          echo "SUCCESS: Metadata uploaded! Set pricing manually in App Store Connect:"
+          echo "1. Go to App Store Connect → Your App → Pricing and Availability"
+          echo "2. Set Price Schedule to 'Free'"
+          echo "3. Set Availability to 'All Countries and Regions'"
           
         else
           echo "ERROR: No IPA file found in build/ipa/"
