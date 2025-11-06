@@ -10,7 +10,7 @@ platform :ios do
       duration: 1200,
       in_house: false
     )
-    
+
     create_keychain(
       name: "fastlane_tmp_keychain",
       password: "temppassword123",
@@ -19,7 +19,7 @@ platform :ios do
       timeout: 3600,
       lock_when_sleeps: false
     )
-    
+
     match(
       type: "appstore",
       app_identifier: "com.san.mainAp",
@@ -30,14 +30,14 @@ platform :ios do
       keychain_name: "fastlane_tmp_keychain",
       keychain_password: "temppassword123"
     )
-    
+
     update_project_provisioning(
       xcodeproj: "NewAppSample.xcodeproj",
       target_filter: "NewAppSample",
       profile: ENV["sigh_com.san.mainAp_appstore_profile-path"],
       code_signing_identity: "iPhone Distribution"
     )
-    
+
     gym(
       configuration: "Release",
       export_method: "app-store",
@@ -50,55 +50,13 @@ platform :ios do
         signingStyle: "manual"
       },
       output_directory: "./build/ipa",
-      output_name: "ManzTestApp2025_v1.1.ipa",
-      archive_path: "./build/archive/ManzTestApp2025_v1.1.xcarchive"
+      output_name: "#{ENV['APP_NAME'] || 'ManzTestApp2025'}_v1.1.ipa",
+      archive_path: "./build/archive/#{ENV['APP_NAME'] || 'ManzTestApp2025'}_v1.1.xcarchive"
     )
   end
 
-  desc "Upload to TestFlight and configure metadata + pricing"
-  lane :upload_and_configure do |options|
-    # Upload to TestFlight
-    pilot(
-      ipa: Dir.glob("./build/ipa/*.ipa").first,
-      username: options[:contact_email] || "dohrasanket@gmail.com",
-      app_identifier: "com.san.mainAp",
-      skip_waiting_for_build_processing: true
-    )
-    
-    # Upload metadata
-    deliver(
-      username: options[:contact_email] || "dohrasanket@gmail.com",
-      app_identifier: "com.san.mainAp",
-      skip_binary_upload: true,
-      skip_screenshots: true,
-      force: true,
-      description: { "en-US" => options[:app_description] || "This ManzzPlusApp app is just simple, sample demo app where you can get lots of details and guide and tips, This app spedically design for you, so why are you waiting just download and enjoy it." },
-      name: { "en-US" => options[:app_name] || "ManzTestApp2025" },
-      keywords: { "en-US" => "utility, free, app" },
-      copyright: "© 2025 #{options[:app_name] || 'ManzTestApp2025'}",
-      marketing_url: { "en-US" => options[:support_url] || "https://dohrasanket.pages.dev/support" },
-      privacy_url: { "en-US" => options[:privacy_policy_url] || "https://dohrasanket.pages.dev/PrivacyPolicy" },
-      support_url: { "en-US" => options[:support_url] || "https://dohrasanket.pages.dev/support" },
-      primary_category: "UTILITIES",
-      app_review_information: {
-        first_name: options[:contact_first_name] || "SANKETKUMAR",
-        last_name: options[:contact_last_name] || "DOHRA",
-        phone_number: options[:contact_phone] || "+91 9265171259",
-        email_address: options[:contact_email] || "dohrasanket@gmail.com",
-        notes: "Contact for #{options[:app_name] || 'ManzTestApp2025'}"
-      },
-      submission_information: {
-        add_id_info_uses_idfa: false,
-        content_rights_has_rights: true,
-        export_compliance_uses_encryption: false,
-        export_compliance_is_exempt: true,
-        export_compliance_contains_third_party_cryptography: false,
-        export_compliance_contains_proprietary_cryptography: false,
-        export_compliance_available_on_french_store: true
-      }
-    )
-
-    # === SET FREE IN ALL COUNTRIES ===
+  desc "Set app to FREE in every country"
+  lane :set_free_worldwide do
     require 'spaceship'
 
     app_store_connect_api_key(
@@ -108,26 +66,19 @@ platform :ios do
     )
 
     app = Spaceship::ConnectAPI::App.find("com.san.mainAp")
-    price_schedules = app.get_app_price_schedules
-    price_schedule = price_schedules.first || app.create_app_price_schedule(base_territory_id: "USA")
+    abort "App not found!" unless app
+
+    price_schedule = app.get_app_price_schedule.first
+    price_schedule ||= app.create_app_price_schedule(base_territory_id: "USA")
 
     free_tier = Spaceship::ConnectAPI::AppPriceTier.all.find { |t| t.price == 0.0 }
-    territories = Spaceship::ConnectAPI::Territory.all
+    abort "Free tier missing!" unless free_tier
 
+    territories = Spaceship::ConnectAPI::Territory.all
     manual_prices = territories.map { |t| { territory_id: t.id, price_tier_id: free_tier.id } }
 
     price_schedule.patch(manual_prices: manual_prices)
 
-    UI.success("FREE in #{territories.count} countries!")
-  end
-
-  desc "Update privacy details"
-  lane :update_privacy_details do
-    UI.important("Privacy data collection settings must be configured manually in App Store Connect:")
-    UI.message("1. Go to App Store Connect > Your App > App Privacy")
-    UI.message("2. Set 'Data Collection' to 'Yes, we collect data from this app'")
-    UI.message("3. Add these data types:")
-    UI.message("   - Identifiers > Device ID (Analytics, App Functionality, Linked to User, Used for Tracking)")
-    UI.message("   - Advertising Data (Analytics, App Functionality, Linked to User, Used for Tracking)")
+    UI.success("FREE in #{territories.count} territories!")
   end
 end

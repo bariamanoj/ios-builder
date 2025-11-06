@@ -47,31 +47,31 @@ on:
 jobs:
   build-and-deploy:
     runs-on: macos-latest
-    
+
     steps:
     - name: Checkout target repository
       uses: actions/checkout@v4
       with:
         repository: ${{ github.event.inputs.repo_url || 'bariamanoj/NewAppSample' }}
         token: ${{ secrets.GH_TOKEN }}
-    
+
     - name: Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: latest-stable
-    
+
     - name: Setup Ruby
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.0'
-    
+
     - name: Install Fastlane
       run: gem install fastlane
 
     - name: Build and Setup App Store
       run: |
-        echo "🔐 Building ManzTestApp2025 v1.1 for App Store distribution"
-        
+        echo "Building ${{ github.event.inputs.app_name }} v1.1 for App Store distribution"
+
         mkdir -p fastlane
         cat > fastlane/Fastfile << 'EOF'
         default_platform(:ios)
@@ -86,7 +86,7 @@ jobs:
               duration: 1200,
               in_house: false
             )
-            
+
             create_keychain(
               name: "fastlane_tmp_keychain",
               password: "temppassword123",
@@ -95,7 +95,7 @@ jobs:
               timeout: 3600,
               lock_when_sleeps: false
             )
-            
+
             match(
               type: "appstore",
               app_identifier: "com.san.mainAp",
@@ -106,14 +106,14 @@ jobs:
               keychain_name: "fastlane_tmp_keychain",
               keychain_password: "temppassword123"
             )
-            
+
             update_project_provisioning(
               xcodeproj: "NewAppSample.xcodeproj",
               target_filter: "NewAppSample",
               profile: ENV["sigh_com.san.mainAp_appstore_profile-path"],
               code_signing_identity: "iPhone Distribution"
             )
-            
+
             gym(
               configuration: "Release",
               export_method: "app-store",
@@ -126,35 +126,14 @@ jobs:
                 signingStyle: "manual"
               },
               output_directory: "./build/ipa",
-              output_name: "ManzTestApp2025_v1.1.ipa",
-              archive_path: "./build/archive/ManzTestApp2025_v1.1.xcarchive"
+              output_name: "${{ github.event.inputs.app_name }}_v1.1.ipa",
+              archive_path: "./build/archive/${{ github.event.inputs.app_name }}_v1.1.xcarchive"
             )
-          end
-
-          desc "Update privacy details"
-          lane :update_privacy_details do
-            require 'spaceship'
-            
-            app_store_connect_api_key(
-              key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
-              issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
-              key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
-            )
-            
-            # Privacy settings may require manual confirmation in App Store Connect
-            # as full API support is limited. This uploads what we can.
-            UI.important("Privacy data collection settings uploaded via upload_app_privacy_details_to_app_store. Confirm manually if needed:")
-            UI.message("1. Go to App Store Connect > Your App > App Privacy")
-            UI.message("2. Set 'Data Collection' to 'Yes, we collect data from this app'")
-            UI.message("3. Add these data types:")
-            UI.message("   - Identifiers > Device ID (Analytics, App Functionality, Linked to User, Used for Tracking)")
-            UI.message("   - Advertising Data (Analytics, App Functionality, Linked to User, Used for Tracking)")
           end
         end
         EOF
-        
+
         fastlane build_and_sign
-        
       env:
         FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
         FASTLANE_PASSWORD: "Sanket_4392"
@@ -174,21 +153,21 @@ jobs:
     - name: Upload to App Store & Set Free + All Territories
       run: |
         echo "Uploading IPA and configuring pricing & availability..."
-        
+
         IPA_FILE=$(find build/ipa -name "*.ipa" | head -1)
-        
+
         if [ -n "$IPA_FILE" ]; then
           echo "Found IPA: $IPA_FILE"
-          
+
           # Upload to TestFlight
           fastlane run pilot upload \
             ipa:"$IPA_FILE" \
             username:"${{ github.event.inputs.contact_email }}" \
             app_identifier:"com.san.mainAp" \
             skip_waiting_for_build_processing:true
-          
+
           echo "IPA uploaded to TestFlight!"
-          
+
           # Upload metadata
           fastlane run deliver \
             username:"${{ github.event.inputs.contact_email }}" \
@@ -206,66 +185,55 @@ jobs:
             primary_category:"UTILITIES" \
             app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"notes\":\"Contact for ${{ github.event.inputs.app_name }}\"}" \
             submission_information:"{\"add_id_info_uses_idfa\":false,\"content_rights_has_rights\":true,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":true,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":true}"
-          
+
           echo "Metadata uploaded successfully!"
 
-          # === SET FREE + ALL TERRITORIES ===
-          ruby -e "
+          # ==== SET FREE IN ALL TERRITORIES ====
+          ruby - <<'RUBY'
           require 'spaceship'
-          
-          # Authenticate
+
           Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
             key_id: ENV['APP_STORE_CONNECT_API_KEY_KEY_ID'],
             issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],
             key: ENV['APP_STORE_CONNECT_API_KEY_KEY']
           )
-          
-          # Find app
+
           app = Spaceship::ConnectAPI::App.find('com.san.mainAp')
-          if app.nil?
-            puts 'ERROR: App not found!'
-            exit 1
-          end
-          puts \"Found app: #{app.name} (#{app.id})\"
-          
-          # Get or create price schedule
-          price_schedules = app.get_app_price_schedules
-          price_schedule = price_schedules.first
-          
-          if price_schedule.nil?
-            puts 'Creating new price schedule...'
+          abort "App not found!" unless app
+          puts "Found app: #{app.name} (#{app.id})"
+
+          # ---- Price schedule (relationship is `prices`) ----
+          price_schedule_resp = app.get_app_price_schedule   # returns a single AppPriceSchedule
+          price_schedule = price_schedule_resp.first
+
+          unless price_schedule
+            puts "Creating new price schedule..."
             base_territory = Spaceship::ConnectAPI::Territory.all.find { |t| t.currency == 'USD' }
             price_schedule = app.create_app_price_schedule(base_territory_id: base_territory.id)
           else
-            puts 'Using existing price schedule.'
+            puts "Using existing price schedule."
           end
-          
-          # Get FREE price tier (Tier 0)
-          free_tier = Spaceship::ConnectAPI::AppPriceTier.all.find { |tier| tier.price == 0.0 }
-          if free_tier.nil?
-            puts 'ERROR: Free tier not found!'
-            exit 1
-          end
-          puts \"Using Free Tier: #{free_tier.tier_stem}\"
-          
-          # Get all territories
+
+          # ---- Free tier (Tier 0) ----
+          free_tier = Spaceship::ConnectAPI::AppPriceTier.all.find { |t| t.price == 0.0 }
+          abort "Free tier not found!" unless free_tier
+          puts "Using Free Tier: #{free_tier.tier_stem}"
+
+          # ---- All territories ----
           territories = Spaceship::ConnectAPI::Territory.all
-          puts \"Found #{territories.count} territories\"
-          
-          # Build manual prices
-          manual_prices = territories.map do |territory|
-            {
-              territory_id: territory.id,
-              price_tier_id: free_tier.id
-            }
+          puts "Found #{territories.count} territories"
+
+          # ---- Build manual prices ----
+          manual_prices = territories.map do |t|
+            { territory_id: t.id, price_tier_id: free_tier.id }
           end
-          
-          # Update price schedule
+
+          # ---- Patch the schedule ----
           price_schedule.patch(manual_prices: manual_prices)
-          
-          puts 'SUCCESS: App is now FREE in ALL territories!'
-          "
-          
+
+          puts "SUCCESS: App is now FREE in ALL #{territories.count} territories!"
+RUBY
+
         else
           echo "ERROR: No IPA file found in build/ipa/"
           exit 1
@@ -278,3 +246,15 @@ jobs:
         APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
         APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+
+    - name: Upload App Privacy Details
+      run: |
+        fastlane run upload_app_privacy_details_to_app_store \
+          username:"${{ github.event.inputs.contact_email }}" \
+          team_name:"Sanket Dohra" \
+          app_identifier:"com.san.mainAp" \
+          json_path:"./privacy_data.json"
+      env:
+        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        FASTLANE_PASSWORD: "Sanket_4392"
+        FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
