@@ -189,27 +189,7 @@ jobs:
           
           echo "IPA uploaded to TestFlight!"
           
-          # Create age rating configuration
-          cat > age_rating.json << 'EOF'
-        {
-          "violenceCartoonOrFantasy": "NONE",
-          "violenceRealistic": "NONE", 
-          "violenceRealisticProlongedGraphicOrSadistic": "NONE",
-          "profanityOrCrudeHumor": "NONE",
-          "matureOrSuggestiveThemes": "NONE",
-          "horrorOrFearThemes": "NONE",
-          "medicalOrTreatmentInformation": "NONE",
-          "alcoholTobaccoOrDrugUseOrReferences": "NONE",
-          "gamblingSimulated": "NONE",
-          "sexualContentOrNudity": "NONE",
-          "sexualContentGraphicAndNudity": "NONE",
-          "unrestrictedWebAccess": "NONE",
-          "gambling": "NONE",
-          "contests": "NONE"
-        }
-        EOF
-          
-          # Configure app metadata and pricing
+          # Configure app metadata and pricing (skip age rating)
           fastlane run deliver \
             username:"${{ github.event.inputs.contact_email }}" \
             app_identifier:"com.san.mainAp" \
@@ -225,7 +205,6 @@ jobs:
             privacy_url:"{\"en-US\":\"${{ github.event.inputs.privacy_policy_url }}\"}" \
             support_url:"{\"en-US\":\"${{ github.event.inputs.support_url }}\"}" \
             primary_category:"UTILITIES" \
-            app_rating_config_path:"./age_rating.json" \
             app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"notes\":\"Contact for ${{ github.event.inputs.app_name }}\"}" \
             submission_information:"{\"add_id_info_uses_idfa\":false,\"content_rights_has_rights\":true,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":true,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":true}"
           
