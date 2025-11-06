@@ -1,4 +1,4 @@
-name: iOS Auto Build and Deploy - Updated
+name: iOS Auto Build and Deploy
 
 on:
   workflow_dispatch:
