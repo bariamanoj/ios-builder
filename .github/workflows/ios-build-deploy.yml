@@ -246,15 +246,3 @@ RUBY
         APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
         APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
-
-    - name: Upload App Privacy Details
-      run: |
-        fastlane run upload_app_privacy_details_to_app_store \
-          username:"${{ github.event.inputs.contact_email }}" \
-          team_name:"Sanket Dohra" \
-          app_identifier:"com.san.mainAp" \
-          json_path:"./privacy_data.json"
-      env:
-        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
-        FASTLANE_PASSWORD: "Sanket_4392"
-        FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
