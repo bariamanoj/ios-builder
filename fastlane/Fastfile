@@ -52,7 +52,7 @@ platform :ios do
       skip_itc: false,
       skip_devcenter: false
     )
-  end
+  end 
 
   desc "Upload IPA to App Store Connect"
   lane :upload_ipa do |options|
