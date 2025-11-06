@@ -106,13 +106,7 @@ platform :ios do
 
   desc "Update privacy details"
   lane :update_privacy_details do
-    app_store_connect_api_key(
-      key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
-      issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
-      key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
-    )
-    
-    UI.important("Privacy data collection settings uploaded via upload_app_privacy_details_to_app_store. Confirm manually if needed:")
+    UI.important("Privacy data collection settings must be configured manually in App Store Connect:")
     UI.message("1. Go to App Store Connect > Your App > App Privacy")
     UI.message("2. Set 'Data Collection' to 'Yes, we collect data from this app'")
     UI.message("3. Add these data types:")
