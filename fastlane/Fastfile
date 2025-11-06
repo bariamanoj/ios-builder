@@ -55,7 +55,7 @@ platform :ios do
     )
   end
 
-  desc "Upload to TestFlight and configure metadata"
+  desc "Upload to TestFlight and configure metadata + pricing"
   lane :upload_and_configure do |options|
     # Upload to TestFlight
     pilot(
@@ -97,11 +97,28 @@ platform :ios do
         export_compliance_available_on_french_store: true
       }
     )
-    
-    UI.success("SUCCESS: Metadata uploaded! Set pricing manually in App Store Connect:")
-    UI.message("1. Go to App Store Connect → Your App → Pricing and Availability")
-    UI.message("2. Set Price Schedule to 'Free'")
-    UI.message("3. Set Availability to 'All Countries and Regions'")
+
+    # === SET FREE IN ALL COUNTRIES ===
+    require 'spaceship'
+
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
+    )
+
+    app = Spaceship::ConnectAPI::App.find("com.san.mainAp")
+    price_schedules = app.get_app_price_schedules
+    price_schedule = price_schedules.first || app.create_app_price_schedule(base_territory_id: "USA")
+
+    free_tier = Spaceship::ConnectAPI::AppPriceTier.all.find { |t| t.price == 0.0 }
+    territories = Spaceship::ConnectAPI::Territory.all
+
+    manual_prices = territories.map { |t| { territory_id: t.id, price_tier_id: free_tier.id } }
+
+    price_schedule.patch(manual_prices: manual_prices)
+
+    UI.success("FREE in #{territories.count} countries!")
   end
 
   desc "Update privacy details"

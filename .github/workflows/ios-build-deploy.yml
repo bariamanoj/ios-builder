@@ -180,7 +180,7 @@ jobs:
         if [ -n "$IPA_FILE" ]; then
           echo "Found IPA: $IPA_FILE"
           
-          # Upload to TestFlight first
+          # Upload to TestFlight
           fastlane run pilot upload \
             ipa:"$IPA_FILE" \
             username:"${{ github.event.inputs.contact_email }}" \
@@ -189,7 +189,7 @@ jobs:
           
           echo "IPA uploaded to TestFlight!"
           
-          # Configure app metadata (without pricing)
+          # Upload metadata
           fastlane run deliver \
             username:"${{ github.event.inputs.contact_email }}" \
             app_identifier:"com.san.mainAp" \
@@ -207,14 +207,64 @@ jobs:
             app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"notes\":\"Contact for ${{ github.event.inputs.app_name }}\"}" \
             submission_information:"{\"add_id_info_uses_idfa\":false,\"content_rights_has_rights\":true,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":true,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":true}"
           
-          echo "SUCCESS: Metadata uploaded!"
-          echo ""
-          echo "📋 MANUAL STEP REQUIRED:"
-          echo "1. Go to App Store Connect → Your App → Pricing and Availability"
-          echo "2. Set Price Schedule to 'Free' (Tier 0)"
-          echo "3. Set Availability to 'All Countries and Regions' (175 territories)"
-          echo ""
-          echo "✅ App is ready for pricing configuration and App Store review!"
+          echo "Metadata uploaded successfully!"
+
+          # === SET FREE + ALL TERRITORIES ===
+          ruby -e "
+          require 'spaceship'
+          
+          # Authenticate
+          Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+            key_id: ENV['APP_STORE_CONNECT_API_KEY_KEY_ID'],
+            issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],
+            key: ENV['APP_STORE_CONNECT_API_KEY_KEY']
+          )
+          
+          # Find app
+          app = Spaceship::ConnectAPI::App.find('com.san.mainAp')
+          if app.nil?
+            puts 'ERROR: App not found!'
+            exit 1
+          end
+          puts \"Found app: #{app.name} (#{app.id})\"
+          
+          # Get or create price schedule
+          price_schedules = app.get_app_price_schedules
+          price_schedule = price_schedules.first
+          
+          if price_schedule.nil?
+            puts 'Creating new price schedule...'
+            base_territory = Spaceship::ConnectAPI::Territory.all.find { |t| t.currency == 'USD' }
+            price_schedule = app.create_app_price_schedule(base_territory_id: base_territory.id)
+          else
+            puts 'Using existing price schedule.'
+          end
+          
+          # Get FREE price tier (Tier 0)
+          free_tier = Spaceship::ConnectAPI::AppPriceTier.all.find { |tier| tier.price == 0.0 }
+          if free_tier.nil?
+            puts 'ERROR: Free tier not found!'
+            exit 1
+          end
+          puts \"Using Free Tier: #{free_tier.tier_stem}\"
+          
+          # Get all territories
+          territories = Spaceship::ConnectAPI::Territory.all
+          puts \"Found #{territories.count} territories\"
+          
+          # Build manual prices
+          manual_prices = territories.map do |territory|
+            {
+              territory_id: territory.id,
+              price_tier_id: free_tier.id
+            }
+          end
+          
+          # Update price schedule
+          price_schedule.patch(manual_prices: manual_prices)
+          
+          puts 'SUCCESS: App is now FREE in ALL territories!'
+          "
           
         else
           echo "ERROR: No IPA file found in build/ipa/"
