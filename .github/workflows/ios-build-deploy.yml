@@ -207,25 +207,14 @@ jobs:
             app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"notes\":\"Contact for ${{ github.event.inputs.app_name }}\"}" \
             submission_information:"{\"add_id_info_uses_idfa\":false,\"content_rights_has_rights\":true,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":true,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":true}"
           
-          echo "SUCCESS: Metadata uploaded! Setting pricing to FREE in all territories..."
-          
-          # Set pricing to FREE and availability to ALL territories using App Store Connect API
-          ruby -e "
-          require 'spaceship'
-          Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
-            key_id: ENV['APP_STORE_CONNECT_API_KEY_KEY_ID'],
-            issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],
-            key: ENV['APP_STORE_CONNECT_API_KEY_KEY']
-          )
-          app = Spaceship::ConnectAPI::App.find('com.san.mainAp')
-          puts \"Found app: #{app.name}\"
-          territories = Spaceship::ConnectAPI::Territory.all
-          puts \"Found #{territories.count} territories\"
-          app.update(app_price_tier_id: '0', territory_ids: territories.map(&:id))
-          puts 'SUCCESS: App set to FREE and available in ALL territories!'
-          "
-          
-          echo "SUCCESS: App configured as FREE and available in ALL countries!"
+          echo "SUCCESS: Metadata uploaded!"
+          echo ""
+          echo "📋 MANUAL STEP REQUIRED:"
+          echo "1. Go to App Store Connect → Your App → Pricing and Availability"
+          echo "2. Set Price Schedule to 'Free' (Tier 0)"
+          echo "3. Set Availability to 'All Countries and Regions' (175 territories)"
+          echo ""
+          echo "✅ App is ready for pricing configuration and App Store review!"
           
         else
           echo "ERROR: No IPA file found in build/ipa/"
