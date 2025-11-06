@@ -213,48 +213,67 @@ jobs:
           ruby -e "
           require 'spaceship'
           
+          # Authenticate with API Key
           Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
             key_id: ENV['APP_STORE_CONNECT_API_KEY_KEY_ID'],
             issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],
             key: ENV['APP_STORE_CONNECT_API_KEY_KEY']
           )
           
+          # Find the app
           app = Spaceship::ConnectAPI::App.find('com.san.mainAp')
-          puts \"Found app: #{app.name}\"
+          if app.nil?
+            puts 'ERROR: App not found!'
+            exit 1
+          end
+          puts \"Found app: #{app.name} (#{app.id})\"
           
-          # Get all territories
+          # Get the current App Store version (needed to access pricing)
+          versions = app.get_app_store_versions(filter: { appStoreState: 'PREPARE_FOR_SUBMISSION' })
+          version = versions.first
+          
+          if version.nil?
+            puts 'ERROR: No app version found in PREPARE_FOR_SUBMISSION state!'
+            exit 1
+          end
+          
+          puts \"Using version: #{version.version_string}\"
+          
+          # Get or create App Price Schedule
+          price_schedule = version.get_app_price_schedule
+          if price_schedule.nil?
+            puts 'Creating new price schedule...'
+            base_territory = Spaceship::ConnectAPI::Territory.all.find { |t| t.currency == 'USD' }
+            price_schedule = version.create_app_price_schedule(base_territory_id: base_territory.id)
+          else
+            puts 'Found existing price schedule, updating...'
+          end
+          
+          # Fetch all territories
           territories = Spaceship::ConnectAPI::Territory.all
           puts \"Found #{territories.count} territories\"
           
-          # Create free pricing for all territories
-          app_price_schedule = app.get_app_price_schedule
-          if app_price_schedule.nil?
-            puts 'Creating new price schedule...'
-            app_price_schedule = Spaceship::ConnectAPI::AppPriceSchedule.create(
-              app: app,
-              base_territory: territories.find { |t| t.currency == 'USD' },
-              manual_prices: territories.map do |territory|
-                {
-                  territory: territory,
-                  customer_price: '0.00',
-                  proceeds: '0.00'
-                }
-              end
-            )
-          else
-            puts 'Updating existing price schedule to free...'
-            app_price_schedule.update(
-              manual_prices: territories.map do |territory|
-                {
-                  territory: territory,
-                  customer_price: '0.00',
-                  proceeds: '0.00'
-                }
-              end
-            )
+          # Prepare price tiers: Tier 0 = Free
+          free_price_tier = Spaceship::ConnectAPI::AppPriceTier.all.find { |tier| tier.price == 0.0 }
+          if free_price_tier.nil?
+            puts 'ERROR: Free price tier (0.0) not found!'
+            exit 1
           end
           
-          puts 'App set to FREE in ALL territories!'
+          # Build manual prices for ALL territories
+          manual_prices = territories.map do |territory|
+            {
+              territory_id: territory.id,
+              price_tier_id: free_price_tier.id
+            }
+          end
+          
+          # Update the price schedule
+          price_schedule.patch(
+            manual_prices: manual_prices
+          )
+          
+          puts 'SUCCESS: App is now FREE in ALL territories!'
           "
           
           echo "SUCCESS: App configured as FREE and available in ALL countries!"
