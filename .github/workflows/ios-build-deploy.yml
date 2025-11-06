@@ -207,10 +207,13 @@ jobs:
             app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"notes\":\"Contact for ${{ github.event.inputs.app_name }}\"}" \
             submission_information:"{\"add_id_info_uses_idfa\":false,\"content_rights_has_rights\":true,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":true,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":true}"
           
-          echo "SUCCESS: Metadata uploaded! Set pricing manually in App Store Connect:"
-          echo "1. Go to App Store Connect → Your App → Pricing and Availability"
-          echo "2. Set Price Schedule to 'Free'"
-          echo "3. Set Availability to 'All Countries and Regions'"
+          echo "SUCCESS: Metadata uploaded! Setting pricing to FREE in all territories..."
+          
+          # Set app pricing to free in all territories
+          fastlane set_free_pricing
+          
+          echo "SUCCESS: App is now FREE in all 175 countries/territories!"
+          echo "Pricing will go into effect when app status is Ready for Sale."
           
         else
           echo "ERROR: No IPA file found in build/ipa/"
