@@ -104,29 +104,6 @@ platform :ios do
     UI.message("3. Set Availability to 'All Countries and Regions'")
   end
 
-  desc "Set app pricing to free in all territories"
-  lane :set_free_pricing do
-    app_store_connect_api_key(
-      key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
-      issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
-      key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
-    )
-    
-    # Set app as free (tier 0) in all available territories
-    deliver(
-      app_identifier: "com.san.mainAp",
-      skip_binary_upload: true,
-      skip_screenshots: true,
-      skip_metadata: true,
-      force: true,
-      price_tier: 0,  # Free tier
-      automatic_release: false,
-      submit_for_review: false
-    )
-    
-    UI.success("App pricing set to FREE in all 175 territories!")
-  end
-
   desc "Update privacy details"
   lane :update_privacy_details do
     UI.important("Privacy data collection settings must be configured manually in App Store Connect:")

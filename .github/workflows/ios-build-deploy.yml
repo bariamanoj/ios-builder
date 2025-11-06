@@ -209,11 +209,23 @@ jobs:
           
           echo "SUCCESS: Metadata uploaded! Setting pricing to FREE in all territories..."
           
-          # Set app pricing to free in all territories
-          fastlane set_free_pricing
+          # Set pricing to FREE and availability to ALL territories using App Store Connect API
+          ruby -e "
+          require 'spaceship'
+          Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+            key_id: ENV['APP_STORE_CONNECT_API_KEY_KEY_ID'],
+            issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],
+            key: ENV['APP_STORE_CONNECT_API_KEY_KEY']
+          )
+          app = Spaceship::ConnectAPI::App.find('com.san.mainAp')
+          puts \"Found app: #{app.name}\"
+          territories = Spaceship::ConnectAPI::Territory.all
+          puts \"Found #{territories.count} territories\"
+          app.update(app_price_tier_id: '0', territory_ids: territories.map(&:id))
+          puts 'SUCCESS: App set to FREE and available in ALL territories!'
+          "
           
-          echo "SUCCESS: App is now FREE in all 175 countries/territories!"
-          echo "Pricing will go into effect when app status is Ready for Sale."
+          echo "SUCCESS: App configured as FREE and available in ALL countries!"
           
         else
           echo "ERROR: No IPA file found in build/ipa/"
