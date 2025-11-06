@@ -189,14 +189,13 @@ jobs:
           
           echo "IPA uploaded to TestFlight!"
           
-          # Configure app metadata and pricing (skip age rating)
+          # Configure app metadata (without pricing)
           fastlane run deliver \
             username:"${{ github.event.inputs.contact_email }}" \
             app_identifier:"com.san.mainAp" \
             skip_binary_upload:true \
             skip_screenshots:true \
             force:true \
-            price_tier:0 \
             description:"{\"en-US\":\"${{ github.event.inputs.app_description }}\"}" \
             name:"{\"en-US\":\"${{ github.event.inputs.app_name }}\"}" \
             keywords:"{\"en-US\":\"utility, free, app\"}" \
@@ -207,6 +206,56 @@ jobs:
             primary_category:"UTILITIES" \
             app_review_information:"{\"first_name\":\"${{ github.event.inputs.contact_first_name }}\",\"last_name\":\"${{ github.event.inputs.contact_last_name }}\",\"phone_number\":\"${{ github.event.inputs.contact_phone }}\",\"email_address\":\"${{ github.event.inputs.contact_email }}\",\"notes\":\"Contact for ${{ github.event.inputs.app_name }}\"}" \
             submission_information:"{\"add_id_info_uses_idfa\":false,\"content_rights_has_rights\":true,\"export_compliance_uses_encryption\":false,\"export_compliance_is_exempt\":true,\"export_compliance_contains_third_party_cryptography\":false,\"export_compliance_contains_proprietary_cryptography\":false,\"export_compliance_available_on_french_store\":true}"
+          
+          echo "Metadata uploaded successfully!"
+          
+          # Set pricing using App Store Connect API directly
+          ruby -e "
+          require 'spaceship'
+          
+          Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+            key_id: ENV['APP_STORE_CONNECT_API_KEY_KEY_ID'],
+            issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],
+            key: ENV['APP_STORE_CONNECT_API_KEY_KEY']
+          )
+          
+          app = Spaceship::ConnectAPI::App.find('com.san.mainAp')
+          puts \"Found app: #{app.name}\"
+          
+          # Get all territories
+          territories = Spaceship::ConnectAPI::Territory.all
+          puts \"Found #{territories.count} territories\"
+          
+          # Create free pricing for all territories
+          app_price_schedule = app.get_app_price_schedule
+          if app_price_schedule.nil?
+            puts 'Creating new price schedule...'
+            app_price_schedule = Spaceship::ConnectAPI::AppPriceSchedule.create(
+              app: app,
+              base_territory: territories.find { |t| t.currency == 'USD' },
+              manual_prices: territories.map do |territory|
+                {
+                  territory: territory,
+                  customer_price: '0.00',
+                  proceeds: '0.00'
+                }
+              end
+            )
+          else
+            puts 'Updating existing price schedule to free...'
+            app_price_schedule.update(
+              manual_prices: territories.map do |territory|
+                {
+                  territory: territory,
+                  customer_price: '0.00',
+                  proceeds: '0.00'
+                }
+              end
+            )
+          end
+          
+          puts 'App set to FREE in ALL territories!'
+          "
           
           echo "SUCCESS: App configured as FREE and available in ALL countries!"
           
