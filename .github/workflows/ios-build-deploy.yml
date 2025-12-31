@@ -124,7 +124,6 @@ jobs:
                      -configuration Release \
                      -destination generic/platform=iOS \
                      -archivePath "build/$SCHEME.xcarchive" \
-                     CODE_SIGNING_ALLOWED=NO \
                      archive
             
         elif find . -maxdepth 1 -name "*.xcodeproj" -type d | grep -q .; then
@@ -137,7 +136,6 @@ jobs:
                      -configuration Release \
                      -destination generic/platform=iOS \
                      -archivePath "build/$SCHEME.xcarchive" \
-                     CODE_SIGNING_ALLOWED=NO \
                      archive
         fi
         
