@@ -156,7 +156,7 @@ platform :ios do
     bundle_id = options[:bundle_id] || "com.san.mainAp"
     
     # Use session token authentication like other lanes
-    Spaceship::Tunes.login
+    Spaceship::Tunes.login(username: "dohrasanket@gmail.com")(username: "dohrasanket@gmail.com")
     app = Spaceship::Tunes.select_app!(app_identifier: bundle_id)
     
     # Set price to free (tier 0)
