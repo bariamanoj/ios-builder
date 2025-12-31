@@ -109,12 +109,82 @@ jobs:
     
     - name: Build and Create Archive
       run: |
-        echo "🚀 Creating iOS Archive using Fastlane"
+        echo "🚀 Creating iOS Archive"
         echo "📦 App: ${{ github.event.inputs.app_name }}"
         echo "🆔 Bundle: ${{ github.event.inputs.bundle_identifier }}"
         
-        # Use Fastlane build_archive lane directly in the source directory
-        fastlane build_archive app_name:"${{ github.event.inputs.app_name }}"
+        # Find project and build with xcodebuild
+        if find . -maxdepth 1 -name "*.xcworkspace" -type d | grep -q .; then
+          WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" -type d | head -1 | sed 's|^\./||')
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "📱 Archiving workspace: $WORKSPACE"
+          
+          xcodebuild -workspace "$WORKSPACE" \
+                     -scheme "$SCHEME" \
+                     -configuration Release \
+                     -destination generic/platform=iOS \
+                     -archivePath "build/$SCHEME.xcarchive" \
+                     archive
+            
+        elif find . -maxdepth 1 -name "*.xcodeproj" -type d | grep -q .; then
+          PROJECT=$(find . -maxdepth 1 -name "*.xcodeproj" -type d | head -1 | sed 's|^\./||')
+          SCHEME=$(basename "$PROJECT" .xcodeproj)
+          echo "📱 Archiving project: $PROJECT"
+          
+          xcodebuild -project "$PROJECT" \
+                     -scheme "$SCHEME" \
+                     -configuration Release \
+                     -destination generic/platform=iOS \
+                     -archivePath "build/$SCHEME.xcarchive" \
+                     archive
+        fi
+        
+        echo "✅ Archive created successfully!"
+        ls -la build/
+      env:
+        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        FASTLANE_PASSWORD: "Sanket_4392"
+        FASTLANE_SKIP_2FA_UPGRADE: 1
+        FASTLANE_HIDE_CHANGELOG: 1
+    
+    - name: Export IPA
+      run: |
+        echo "📦 Exporting IPA"
+        
+        # Find archive
+        ARCHIVE=$(find build -name "*.xcarchive" | head -1)
+        if [ -n "$ARCHIVE" ]; then
+          echo "📱 Exporting from: $ARCHIVE"
+          
+          # Create IPA manually
+          mkdir -p build/ipa
+          
+          # Extract app bundle from archive
+          find "$ARCHIVE/Products/Applications" -name "*.app" -exec cp -r {} build/ipa/ \;
+          
+          cd build/ipa
+          APP_FILE=$(find . -name "*.app" -type d | head -1 | sed 's|^\./||')
+          APP_NAME="${{ github.event.inputs.app_name }}"
+          
+          if [ -n "$APP_FILE" ]; then
+            # Set build number to current timestamp to ensure uniqueness
+            BUILD_NUMBER=$(date +%Y%m%d%H%M%S)
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP_FILE/Info.plist"
+            echo "📱 Updated build number to: $BUILD_NUMBER"
+            
+            mkdir -p Payload
+            mv "$APP_FILE" Payload/
+            zip -r "$APP_NAME.ipa" Payload/
+            rm -rf Payload/
+            
+            echo "✅ IPA created successfully!"
+            ls -la *.ipa
+          else
+            echo "❌ No .app bundle found"
+          fi
+        else
+          echo "❌ No archive found to export"
+        fi
       env:
         FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
         FASTLANE_PASSWORD: "Sanket_4392"
