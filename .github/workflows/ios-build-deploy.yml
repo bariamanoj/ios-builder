@@ -113,12 +113,7 @@ jobs:
         echo "📦 App: ${{ github.event.inputs.app_name }}"
         echo "🆔 Bundle: ${{ github.event.inputs.bundle_identifier }}"
         
-        # Use Fastlane build_archive lane
-        cd /tmp
-        git clone https://github.com/bariamanoj/ios-builder.git
-        cd ios-builder
-        cp -r /Users/runner/work/ios-builder/ios-builder/* .
-        
+        # Use Fastlane build_archive lane directly in the source directory
         fastlane build_archive app_name:"${{ github.event.inputs.app_name }}"
       env:
         FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
@@ -181,12 +176,7 @@ jobs:
       run: |
         echo "🏗️ Creating app on App Store Connect"
         
-        # Checkout ios-builder repo to access Fastfile
-        cd /tmp
-        git clone https://github.com/bariamanoj/ios-builder.git
-        cd ios-builder
-        
-        # Run create_app from ios-builder directory (skip if app exists)
+        # Run create_app directly (app already exists, will skip)
         fastlane create_app app_name:"${{ github.event.inputs.app_name }}" bundle_id:"${{ github.event.inputs.bundle_identifier }}" || echo "App may already exist, continuing..."
       env:
         FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
@@ -200,7 +190,7 @@ jobs:
         echo "🚀 Attempting to upload to App Store Connect"
         
         # Find the IPA file from Fastlane build
-        IPA_FILE=$(find /tmp/ios-builder/build/ipa -name "*.ipa" | head -1)
+        IPA_FILE=$(find build/ipa -name "*.ipa" | head -1)
         
         if [ -n "$IPA_FILE" ]; then
           echo "📱 Found IPA: $IPA_FILE"
