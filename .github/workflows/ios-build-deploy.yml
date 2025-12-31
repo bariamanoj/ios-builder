@@ -200,10 +200,11 @@ jobs:
         git clone https://github.com/bariamanoj/ios-builder.git
         cd ios-builder
         
-        # Run create_app from ios-builder directory
-        fastlane create_app app_name:"${{ github.event.inputs.app_name }}" bundle_id:"${{ github.event.inputs.bundle_identifier }}"
+        # Run create_app from ios-builder directory (skip if app exists)
+        fastlane create_app app_name:"${{ github.event.inputs.app_name }}" bundle_id:"${{ github.event.inputs.bundle_identifier }}" || echo "App may already exist, continuing..."
       env:
         FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        FASTLANE_PASSWORD: "Sanket_4392"
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
       continue-on-error: true
@@ -219,12 +220,10 @@ jobs:
           echo "📱 Found IPA: $IPA_FILE"
           echo "🔑 Using API key authentication"
           
-          # Create API key file
-          echo "$APP_STORE_CONNECT_API_KEY_KEY" > AuthKey_$APP_STORE_CONNECT_API_KEY_KEY_ID.p8
-          
-          # Use upload_to_testflight with API key
+          # Use upload_to_testflight with session token
           fastlane run upload_to_testflight \
             ipa:"$IPA_FILE" \
+            username:"dohrasanket@gmail.com" \
             skip_waiting_for_build_processing:true
             
           echo "✅ Upload completed!"
@@ -233,6 +232,7 @@ jobs:
         fi
       env:
         FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        FASTLANE_PASSWORD: "Sanket_4392"
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
       continue-on-error: true
