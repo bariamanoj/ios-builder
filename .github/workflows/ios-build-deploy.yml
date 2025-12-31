@@ -162,12 +162,19 @@ jobs:
           # Extract app bundle from archive
           find "$ARCHIVE/Products/Applications" -name "*.app" -exec cp -r {} build/ipa/ \;
           
-          # Create IPA with proper naming
+          # Extract app bundle from archive
+          find "$ARCHIVE/Products/Applications" -name "*.app" -exec cp -r {} build/ipa/ \;
+          
           cd build/ipa
           APP_FILE=$(find . -name "*.app" -type d | head -1 | sed 's|^\./||')
           APP_NAME="${{ github.event.inputs.app_name }}"
           
           if [ -n "$APP_FILE" ]; then
+            # Set build number to current timestamp to ensure uniqueness
+            BUILD_NUMBER=$(date +%Y%m%d%H%M%S)
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP_FILE/Info.plist"
+            echo "📱 Updated build number to: $BUILD_NUMBER"
+            
             mkdir -p Payload
             mv "$APP_FILE" Payload/
             zip -r "$APP_NAME.ipa" Payload/
