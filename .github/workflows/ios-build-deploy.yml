@@ -200,15 +200,12 @@ jobs:
         git clone https://github.com/bariamanoj/ios-builder.git
         cd ios-builder
         
-        # Create API key file
-        echo "$APP_STORE_CONNECT_API_KEY_KEY" > AuthKey_$APP_STORE_CONNECT_API_KEY_KEY_ID.p8
-        
         # Run create_app from ios-builder directory
         fastlane create_app app_name:"${{ github.event.inputs.app_name }}" bundle_id:"${{ github.event.inputs.bundle_identifier }}"
       env:
-        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
-        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
-        APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        FASTLANE_SKIP_2FA_UPGRADE: 1
+        FASTLANE_HIDE_CHANGELOG: 1
       continue-on-error: true
 
     - name: Upload to App Store Connect (Optional)
@@ -235,7 +232,7 @@ jobs:
           echo "⚠️ No IPA found to upload"
         fi
       env:
-        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
-        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
-        APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        FASTLANE_SKIP_2FA_UPGRADE: 1
+        FASTLANE_HIDE_CHANGELOG: 1
       continue-on-error: true
