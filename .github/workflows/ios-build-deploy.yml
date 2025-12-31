@@ -273,6 +273,14 @@ jobs:
             skip_waiting_for_build_processing:true
             
           echo "✅ Upload completed!"
+          
+          # Update pricing and availability
+          echo "💰 Updating pricing and availability..."
+          cd /tmp
+          rm -rf ios-builder
+          git clone https://github.com/bariamanoj/ios-builder.git
+          cd ios-builder
+          fastlane update_pricing_and_availability bundle_id:"${{ github.event.inputs.bundle_identifier }}"
         else
           echo "⚠️ No IPA found to upload"
         fi
