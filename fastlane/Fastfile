@@ -15,8 +15,7 @@ platform :ios do
         workspace: workspace,
         scheme: scheme,
         configuration: "Release",
-        export_method: "development",
-        skip_codesigning: true,
+        export_method: "app-store",
         archive_path: "./build/#{scheme}.xcarchive",
         output_directory: "./build/ipa",
         output_name: "#{app_name}.ipa"
@@ -29,8 +28,7 @@ platform :ios do
         project: project,
         scheme: scheme,
         configuration: "Release",
-        export_method: "development",
-        skip_codesigning: true,
+        export_method: "app-store",
         archive_path: "./build/#{scheme}.xcarchive",
         output_directory: "./build/ipa",
         output_name: "#{app_name}.ipa"

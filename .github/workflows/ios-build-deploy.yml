@@ -109,38 +109,22 @@ jobs:
     
     - name: Build and Create Archive
       run: |
-        echo "🚀 Creating iOS Archive"
+        echo "🚀 Creating iOS Archive using Fastlane"
         echo "📦 App: ${{ github.event.inputs.app_name }}"
         echo "🆔 Bundle: ${{ github.event.inputs.bundle_identifier }}"
         
-        # Find project
-        if find . -maxdepth 1 -name "*.xcworkspace" -type d | grep -q .; then
-          WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" -type d | head -1 | sed 's|^\./||')
-          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
-          echo "📱 Archiving workspace: $WORKSPACE"
-          
-          xcodebuild -workspace "$WORKSPACE" \
-                     -scheme "$SCHEME" \
-                     -configuration Release \
-                     -destination generic/platform=iOS \
-                     -archivePath "build/$SCHEME.xcarchive" \
-                     archive
-            
-        elif find . -maxdepth 1 -name "*.xcodeproj" -type d | grep -q .; then
-          PROJECT=$(find . -maxdepth 1 -name "*.xcodeproj" -type d | head -1 | sed 's|^\./||')
-          SCHEME=$(basename "$PROJECT" .xcodeproj)
-          echo "📱 Archiving project: $PROJECT"
-          
-          xcodebuild -project "$PROJECT" \
-                     -scheme "$SCHEME" \
-                     -configuration Release \
-                     -destination generic/platform=iOS \
-                     -archivePath "build/$SCHEME.xcarchive" \
-                     archive
-        fi
+        # Use Fastlane build_archive lane
+        cd /tmp
+        git clone https://github.com/bariamanoj/ios-builder.git
+        cd ios-builder
+        cp -r /Users/runner/work/ios-builder/ios-builder/* .
         
-        echo "✅ Archive created successfully!"
-        ls -la build/
+        fastlane build_archive app_name:"${{ github.event.inputs.app_name }}"
+      env:
+        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        FASTLANE_PASSWORD: "Sanket_4392"
+        FASTLANE_SKIP_2FA_UPGRADE: 1
+        FASTLANE_HIDE_CHANGELOG: 1
       env:
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
@@ -218,8 +202,8 @@ jobs:
       run: |
         echo "🚀 Attempting to upload to App Store Connect"
         
-        # Find the IPA file
-        IPA_FILE=$(find build/ipa -name "*.ipa" | head -1)
+        # Find the IPA file from Fastlane build
+        IPA_FILE=$(find /tmp/ios-builder/build/ipa -name "*.ipa" | head -1)
         
         if [ -n "$IPA_FILE" ]; then
           echo "📱 Found IPA: $IPA_FILE"
