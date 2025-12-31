@@ -233,6 +233,7 @@ jobs:
       env:
         FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
         FASTLANE_PASSWORD: "Sanket_4392"
+        FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "xzwz-wtfs-wptw-bhhe"
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
       continue-on-error: true
