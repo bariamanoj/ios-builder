@@ -1,0 +1,32 @@
+name: Pricing Update Only
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-pricing:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.1'
+        bundler-cache: true
+        
+    - name: Install Fastlane
+      run: gem install fastlane
+      
+    - name: Update Pricing and Availability
+      env:
+        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        FASTLANE_PASSWORD: ${{ secrets.FASTLANE_PASSWORD }}
+        FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
+        FASTLANE_SKIP_2FA_UPGRADE: 1
+        FASTLANE_HIDE_CHANGELOG: 1
+      run: |
+        echo "🏪 Starting Pricing and Availability Update"
+        fastlane update_pricing_and_availability
