@@ -58,6 +58,7 @@ jobs:
         
         # Use session token authentication (no 2FA needed)
         fastlane run produce \
+          username:"dohrasanket@gmail.com" \
           app_name:"${{ github.event.inputs.app_name }}" \
           app_identifier:"${{ github.event.inputs.bundle_identifier }}" \
           language:"en-US" \
@@ -124,6 +125,7 @@ jobs:
                      -configuration Release \
                      -destination generic/platform=iOS \
                      -archivePath "build/$SCHEME.xcarchive" \
+                     CODE_SIGNING_ALLOWED=NO \
                      archive
             
         elif find . -maxdepth 1 -name "*.xcodeproj" -type d | grep -q .; then
@@ -136,6 +138,7 @@ jobs:
                      -configuration Release \
                      -destination generic/platform=iOS \
                      -archivePath "build/$SCHEME.xcarchive" \
+                     CODE_SIGNING_ALLOWED=NO \
                      archive
         fi
         
