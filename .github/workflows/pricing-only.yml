@@ -15,7 +15,11 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.1'
-        bundler-cache: true
+        
+    - name: Install Fastlane
+      run: |
+        gem install fastlane
+        gem install spaceship
       
     - name: Update Pricing and Availability
       env:
