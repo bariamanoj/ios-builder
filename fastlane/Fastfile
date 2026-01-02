@@ -155,21 +155,14 @@ platform :ios do
   lane :update_pricing_and_availability do |options|
     bundle_id = options[:bundle_id] || "com.san.mainAp"
     
-    # Use App Store Connect API
-    app_store_connect_api_key(
-      key_id: "762ZATSHW9",
-      issuer_id: "69a6de92-4f8b-47e3-e053-5b8c7c11a4d1",
-      key_filepath: "./AuthKey_762ZATSHW9.p8"
-    )
-    
-    # Update pricing to free
+    # Update pricing to free using deliver
     deliver(
       app_identifier: bundle_id,
       price_tier: 0,
-      automatic_release: false,
       skip_screenshots: true,
       skip_metadata: true,
-      skip_app_version_update: true
+      skip_app_version_update: true,
+      force: true
     )
     
     UI.success("Updated pricing to free ($0.00) for #{bundle_id}")
