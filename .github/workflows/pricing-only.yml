@@ -16,9 +16,6 @@ jobs:
       with:
         ruby-version: '3.1'
         bundler-cache: true
-        
-    - name: Install Fastlane
-      run: gem install fastlane
       
     - name: Update Pricing and Availability
       env:
