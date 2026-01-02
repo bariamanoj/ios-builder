@@ -1,16 +1,15 @@
-name: Pricing and Availability Update
+name: Pricing and Availability Configuration
 
 on:
   workflow_dispatch:
     inputs:
-      bundle_id:
+      bundle_identifier:
         description: 'App Bundle ID'
-        required: false
-        default: 'com.san.mainAp'
+        required: true
         type: string
 
 jobs:
-  update-pricing:
+  configure-pricing:
     runs-on: macos-latest
     
     steps:
@@ -21,16 +20,19 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.1'
-        bundler-cache: true
       
-    - name: Update Pricing and Availability
+    - name: Install Fastlane
+      run: gem install fastlane
+      
+    - name: Configure Pricing and Availability
       env:
         APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
         APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
         APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
       run: |
-        echo "🏪 Starting Pricing and Availability Update"
-        echo "📱 Bundle ID: ${{ github.event.inputs.bundle_id }}"
-        bundle exec fastlane update_pricing_and_availability bundle_id:"${{ github.event.inputs.bundle_id }}"
+        echo "🏪 Starting Pricing and Availability Configuration"
+        echo "📱 Bundle ID: ${{ github.event.inputs.bundle_identifier }}"
+        fastlane configure_pricing_and_availability bundle_id:"${{ github.event.inputs.bundle_identifier }}"
