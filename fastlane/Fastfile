@@ -155,26 +155,28 @@ platform :ios do
   lane :configure_pricing_and_availability do |options|
     bundle_id = options[:bundle_id] || "com.san.mainAp"
 
-    # Use session token if available, fallback to API key
-    if ENV["FASTLANE_SESSION"]
-      UI.message("Using Fastlane session token for authentication")
-    else
-      app_store_connect_api_key(
-        key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
-        issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
-        key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
-      )
-    end
+    # Always use API key authentication for reliability
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
+    )
 
+    UI.message("Finding app with bundle ID: #{bundle_id}")
     app = Spaceship::ConnectAPI::App.find(bundle_id)
     UI.user_error!("App with bundle ID #{bundle_id} not found") if app.nil?
 
     UI.message("Found app: #{app.name} (ID: #{app.id})")
 
-    # Set app to free (Tier 0) and available in all territories
-    app.update(
-      app_price_tier_id: "0",
-      territory_ids: nil
+    # Use deliver action to set pricing
+    deliver(
+      app_identifier: bundle_id,
+      price_tier: 0,  # Tier 0 = Free
+      skip_screenshots: true,
+      skip_metadata: true,
+      skip_binary_upload: true,
+      skip_app_version_update: true,
+      force: true
     )
 
     UI.success("App set to Free ($0.00) globally and available in all countries!")
