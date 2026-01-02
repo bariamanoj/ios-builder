@@ -15,11 +15,7 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.1'
-        
-    - name: Install Fastlane
-      run: |
-        gem install fastlane
-        gem install spaceship
+        bundler-cache: true
       
     - name: Update Pricing and Availability
       env:
@@ -30,4 +26,4 @@ jobs:
         FASTLANE_HIDE_CHANGELOG: 1
       run: |
         echo "🏪 Starting Pricing and Availability Update"
-        fastlane update_pricing_and_availability
+        bundle exec fastlane update_pricing_and_availability
