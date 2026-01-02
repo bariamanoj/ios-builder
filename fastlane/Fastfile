@@ -166,16 +166,89 @@ platform :ios do
     UI.user_error!("App with bundle ID #{bundle_id} not found") if app.nil?
 
     UI.success("✅ Found app: #{app.name} (ID: #{app.id})")
-    
-    UI.important("⚠️  Automated pricing configuration is currently unavailable due to Apple API changes.")
-    UI.message("📝 Please configure pricing manually in App Store Connect:")
-    UI.message("   1. Go to: https://appstoreconnect.apple.com")
-    UI.message("   2. Select: #{app.name}")
-    UI.message("   3. Navigate: App Store → Monetization → Pricing and Availability")
-    UI.message("   4. Set Price: $0.00 (Free) for all countries/regions")
-    UI.message("   5. Set Availability: All Countries or Regions")
-    
-    UI.success("🎯 App verification completed. Manual pricing setup required.")
+
+    # Step 1: Set pricing to free ($0.00) across all territories
+    UI.message("💰 Configuring pricing to free ($0.00) for all territories...")
+
+    # Get all available price points for base territory (USA)
+    price_points_response = Spaceship::ConnectAPI.get_app_price_points(app_id: app.id, filter: { territory: 'USA' })
+    free_price_point = price_points_response.data.find { |point| point.attributes['customerPrice'].to_f == 0.0 }
+    UI.user_error!("Free price point not found for USA") if free_price_point.nil?
+    free_price_point_id = free_price_point.id
+
+    # Get base territory (USA)
+    territories = Spaceship::ConnectAPI.get_territories.data
+    usa_territory = territories.find { |t| t.id == 'USA' }
+    UI.user_error!("USA territory not found") if usa_territory.nil?
+
+    # Check if price schedule exists; if not, create one with free price
+    price_schedule = app.get_app_price_schedule rescue nil
+    if price_schedule.nil?
+      # Create price schedule body
+      body = {
+        data: {
+          type: 'appPriceSchedules',
+          relationships: {
+            app: {
+              data: { type: 'apps', id: app.id }
+            },
+            baseTerritory: {
+              data: { type: 'territories', id: 'USA' }
+            }
+          }
+        },
+        included: [
+          {
+            type: 'appPrices',
+            attributes: {
+              startDate: nil
+            },
+            relationships: {
+              pricePoint: {
+                data: { type: 'appPricePoints', id: free_price_point_id }
+              }
+            }
+          }
+        ]
+      }
+
+      Spaceship::ConnectAPI.post_app_price_schedule(body: body)
+      UI.success("✅ Created free price schedule for all territories")
+    else
+      UI.message("ℹ️ Price schedule already exists")
+    end
+
+    # Step 2: Set availability to all countries/regions
+    UI.message("🌍 Configuring availability for all countries/regions...")
+
+    # Get all territories
+    all_territories = Spaceship::ConnectAPI.get_territories.data
+    territory_datas = all_territories.map { |t| { type: 'territories', id: t.id } }
+
+    # Get current app availability
+    availability_response = app.get_app_availability_v2
+    availability = availability_response.data
+
+    # Update to all territories and enable for new ones
+    body = {
+      data: {
+        type: 'appAvailabilities',
+        id: availability.id,
+        attributes: {
+          availableInNewTerritories: true
+        },
+        relationships: {
+          availableTerritories: {
+            data: territory_datas
+          }
+        }
+      }
+    }
+
+    Spaceship::ConnectAPI.patch_app_availability(app_availability_id: availability.id, body: body)
+    UI.success("✅ Set availability to all countries/regions")
+
+    UI.success("🎯 Pricing and availability configuration completed!")
   end
 
   desc "Complete build and upload process"
