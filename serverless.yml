@@ -22,3 +22,11 @@ provider:
 functions:
   api:
     handler: handler.handler
+  pricing:
+    handler: pricing-handler.handler
+    description: "Trigger App Store pricing and availability configuration"
+    events:
+      - http:
+          path: pricing
+          method: post
+          cors: true

@@ -6,12 +6,18 @@ const GITHUB_REPO = "ios-builder";
 
 exports.handler = async (event) => {
   try {
-    console.log("Triggering pricing workflow...");
+    console.log("Triggering pricing and availability workflow...");
+    
+    // Extract bundle_id from event if provided
+    const bundleId = event.bundle_id || event.body?.bundle_id || "com.san.mainAp";
     
     const response = await axios.post(
       `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/pricing-only.yml/dispatches`,
       {
-        ref: "main"
+        ref: "main",
+        inputs: {
+          bundle_id: bundleId
+        }
       },
       {
         headers: {
@@ -25,8 +31,10 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "Pricing workflow triggered successfully",
-        workflow: "pricing-only.yml"
+        message: "Pricing and availability workflow triggered successfully",
+        workflow: "pricing-only.yml",
+        bundle_id: bundleId,
+        status: "triggered"
       })
     };
 

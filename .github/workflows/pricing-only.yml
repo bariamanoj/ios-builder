@@ -1,7 +1,13 @@
-name: Pricing Update Only
+name: Pricing and Availability Update
 
 on:
   workflow_dispatch:
+    inputs:
+      bundle_id:
+        description: 'App Bundle ID'
+        required: false
+        default: 'com.san.mainAp'
+        type: string
 
 jobs:
   update-pricing:
@@ -19,11 +25,12 @@ jobs:
       
     - name: Update Pricing and Availability
       env:
-        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
-        FASTLANE_PASSWORD: ${{ secrets.FASTLANE_PASSWORD }}
-        FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
+        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+        APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
       run: |
         echo "🏪 Starting Pricing and Availability Update"
-        bundle exec fastlane update_pricing_and_availability
+        echo "📱 Bundle ID: ${{ github.event.inputs.bundle_id }}"
+        bundle exec fastlane update_pricing_and_availability bundle_id:"${{ github.event.inputs.bundle_id }}"
