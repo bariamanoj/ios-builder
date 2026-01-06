@@ -156,17 +156,20 @@ platform :ios do
     bundle_id = options[:bundle_id] || "com.san.mainAp"
 
     begin
-      # Use App Store Connect API key authentication
-      app_store_connect_api_key(
+      # Create API token directly
+      token = Spaceship::ConnectAPI::Token.create(
         key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
         issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
         key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
       )
       
+      # Initialize client with token
+      client = Spaceship::ConnectAPI::Client.new(token: token)
+      
       UI.message("🔑 Using App Store Connect API key authentication")
       
       # Find the app
-      app = Spaceship::ConnectAPI::App.find(bundle_id)
+      app = client.get_app(app_id: nil, includes: nil).find { |a| a.bundle_id == bundle_id }
       if app.nil?
         UI.error("❌ App not found with bundle ID: #{bundle_id}")
         return
@@ -175,14 +178,15 @@ platform :ios do
       UI.success("✅ Found app: #{app.name} (ID: #{app.id})")
       
       # Get all territories for availability
-      territories = Spaceship::ConnectAPI::Territory.all
+      territories = client.get_territories
       territory_ids = territories.map(&:id)
       
       UI.message("🌍 Found #{territories.count} territories")
       
       # Configure pricing and availability
       # Price tier 0 = Free
-      app.update(
+      client.patch_app(
+        app_id: app.id,
         attributes: {
           availableInNewTerritories: true
         },
