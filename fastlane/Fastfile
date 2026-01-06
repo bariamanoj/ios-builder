@@ -155,30 +155,54 @@ platform :ios do
   lane :configure_pricing_and_availability do |options|
     bundle_id = options[:bundle_id] || "com.san.mainAp"
 
-    UI.success("✅ App Bundle ID: #{bundle_id}")
-    UI.success("🔗 App Store Connect: https://appstoreconnect.apple.com/apps")
+    UI.message("💰 Attempting automated pricing setup for #{bundle_id}...")
     
-    UI.important("📋 MANUAL CONFIGURATION REQUIRED:")
-    UI.message("Apple's App Store Connect APIs have changed - manual setup is required")
-    UI.message("")
-    UI.message("🔍 FIND YOUR APP:")
-    UI.message("   1. Go to: https://appstoreconnect.apple.com/apps")
-    UI.message("   2. Find app: ManzTestApp2025 (#{bundle_id})")
-    UI.message("   3. Click on the app name")
-    UI.message("")
-    UI.message("🏪 PRICING SETUP:")
-    UI.message("   1. Click: Distribution → Pricing and Availability")
-    UI.message("   2. Click: Add Pricing")
-    UI.message("   3. Base Country: United States (USD)")
-    UI.message("   4. Price: $0.00 (Free)")
-    UI.message("   5. Apply to all countries/regions")
-    UI.message("")
-    UI.message("🌍 AVAILABILITY SETUP:")
-    UI.message("   1. In the same page, click: Set Up Availability")
-    UI.message("   2. Select: All Countries or Regions")
-    UI.message("   3. Save changes")
-    
-    UI.success("🎯 Manual setup instructions provided. Please complete the steps above.")
+    begin
+      # Try using deliver with minimal configuration
+      deliver(
+        app_identifier: bundle_id,
+        price_tier: 0,
+        automatic_release: false,
+        force: true,
+        skip_binary_upload: true,
+        skip_screenshots: true,
+        skip_metadata: true,
+        skip_app_version_update: true,
+        overwrite_screenshots: false,
+        submit_for_review: false,
+        run_precheck_before_submit: false,
+        precheck_include_in_app_purchases: false
+      )
+      
+      UI.success("✅ Automated pricing setup completed!")
+      UI.success("🔗 Verify at: https://appstoreconnect.apple.com/apps")
+      
+    rescue => e
+      UI.error("❌ Automated setup failed: #{e.message}")
+      
+      # Fallback: Try using spaceship directly with session auth only
+      begin
+        UI.message("🔄 Trying alternative approach...")
+        
+        # Use only session-based auth
+        require 'spaceship'
+        Spaceship::Tunes.login
+        
+        app = Spaceship::Application.find(bundle_id)
+        if app
+          UI.success("✅ Found app: #{app.name}")
+          
+          # Try to set pricing using legacy API
+          app.update_price_tier!(0)
+          UI.success("✅ Pricing set to FREE!")
+        end
+        
+      rescue => e2
+        UI.error("❌ Alternative approach also failed: #{e2.message}")
+        UI.important("📋 MANUAL SETUP REQUIRED - API issues persist")
+        UI.message("Please click 'Add Pricing' and 'Set Up Availability' buttons in App Store Connect")
+      end
+    end
   end
 
   desc "Complete build and upload process"
