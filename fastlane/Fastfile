@@ -178,38 +178,34 @@ platform :ios do
       UI.message("🔑 Issuer ID: #{issuer_id}")
       UI.message("🔑 Key content length: #{key_content.length} characters")
       
-      # Create API token directly
+      # Create API token and set it globally
       token = Spaceship::ConnectAPI::Token.create(
         key_id: key_id,
         issuer_id: issuer_id,
         key: key_content
       )
       
-      # Initialize client with token
-      client = Spaceship::ConnectAPI::Client.new(token: token)
+      # Set the token globally
+      Spaceship::ConnectAPI.token = token
       
-      # Find the app
-      apps = client.get_apps
-      app = apps.find { |a| a.bundle_id == bundle_id }
+      # Find the app using global methods
+      app = Spaceship::ConnectAPI::App.find(bundle_id)
       if app.nil?
         UI.error("❌ App not found with bundle ID: #{bundle_id}")
-        UI.message("Available apps:")
-        apps.each { |a| UI.message("  - #{a.name} (#{a.bundle_id})") }
         return
       end
       
       UI.success("✅ Found app: #{app.name} (ID: #{app.id})")
       
       # Get all territories for availability
-      territories = client.get_territories
+      territories = Spaceship::ConnectAPI::Territory.all
       territory_ids = territories.map(&:id)
       
       UI.message("🌍 Found #{territories.count} territories")
       
-      # Configure pricing and availability
+      # Configure pricing and availability using app.update
       # Price tier 0 = Free
-      client.patch_app(
-        app_id: app.id,
+      app.update(
         attributes: {
           availableInNewTerritories: true
         },
