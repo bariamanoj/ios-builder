@@ -269,37 +269,20 @@ platform :ios do
     UI.success("✅ Found app: #{app.name} (ID: #{app.id})")
     
     begin
-      # Set pricing to free ($0.00) for all territories using Spaceship API
+      # Set pricing to free ($0.00) using deliver action with minimal parameters
       UI.message("💰 Setting app pricing to FREE ($0.00) for all countries...")
       
-      # Get existing app prices
-      app_prices = app.prices
+      # Use deliver with only essential pricing parameters
+      deliver(
+        app_identifier: bundle_id,
+        price_tier: 0,
+        skip_binary_upload: true,
+        skip_screenshots: true,
+        skip_metadata: true,
+        force: true
+      )
       
-      if app_prices&.first
-        # App has existing prices, update them
-        app_price = Spaceship::ConnectAPI.get_app_price(app_price_id: app_prices.first.id, includes: "priceTier").first
-        old_price = app_price.price_tier.id
-        
-        if "0" == old_price
-          UI.success("✅ App is already FREE (tier 0)")
-        else
-          # Update to free tier
-          app.update(app_price_tier_id: "0")
-          UI.success("✅ Updated pricing from tier #{old_price} to FREE (tier 0)")
-        end
-      else
-        # App has no prices, set up pricing for all territories
-        UI.message("🌍 App has no prices yet... Setting up FREE pricing for all countries")
-        territory_ids = Spaceship::ConnectAPI::Territory.all.map(&:id)
-        
-        app.update(
-          app_price_tier_id: "0",
-          territory_ids: territory_ids
-        )
-        UI.success("✅ Set up FREE pricing for all countries")
-      end
-      
-      UI.success("✅ Pricing configuration completed")
+      UI.success("✅ Pricing set to FREE for all countries")
       UI.success("🔗 Verify at: https://appstoreconnect.apple.com/apps/#{app.id}/distribution/pricing")
       
     rescue => e
