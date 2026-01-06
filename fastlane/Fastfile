@@ -269,48 +269,20 @@ platform :ios do
     UI.success("✅ Found app: #{app.name} (ID: #{app.id})")
     
     begin
-      # Set pricing to free ($0.00) for all territories
-      UI.message("💰 Setting app pricing to FREE ($0.00) for all countries...")
+      # Set pricing to free ($0.00) for all territories using Fastlane deliver
+      UI.message("💰 Setting app pricing to FREE ($0.00) for all countries using Fastlane...")
       
-      # Use proper Spaceship API for pricing
-      require 'spaceship'
-      
-      # Get app pricing information
-      app_info = Spaceship::ConnectAPI::AppInfo.get(app_id: app.id)
-      
-      # Get all territories
-      territories = Spaceship::ConnectAPI::Territory.all
-      UI.message("🌍 Found #{territories.count} territories")
-      
-      # Set app to free tier (0) for all territories
-      pricing_data = {
-        data: {
-          type: "appPrices",
-          attributes: {
-            startDate: nil
-          },
-          relationships: {
-            app: {
-              data: {
-                type: "apps",
-                id: app.id
-              }
-            },
-            priceTier: {
-              data: {
-                type: "appPriceTiers", 
-                id: "0"  # Free tier
-              }
-            },
-            territory: {
-              data: territories.map { |t| { type: "territories", id: t.id } }
-            }
-          }
-        }
-      }
-      
-      # Apply pricing using direct API call
-      Spaceship::ConnectAPI.post("appPrices", pricing_data)
+      # Use Fastlane deliver action for pricing
+      deliver(
+        app_identifier: bundle_id,
+        price_tier: 0,  # Free tier
+        automatic_release: false,
+        skip_binary_upload: true,
+        skip_screenshots: true,
+        skip_metadata: false,
+        force: true,
+        submit_for_review: false
+      )
       
       UI.success("✅ Pricing set to FREE for all countries")
       UI.success("✅ Availability set to ALL COUNTRIES")
