@@ -43,18 +43,12 @@ jobs:
       run: |
         echo "💰 Configuring App Store pricing and availability..."
         echo "🆔 Bundle: ${{ github.event.inputs.bundle_identifier }}"
-        echo "🔧 Using deliver action for pricing configuration"
+        echo "🔧 Verifying app exists and providing manual instructions"
         
-        # Use deliver action with only pricing parameters
-        bundle exec fastlane run deliver \
-          app_identifier:"${{ github.event.inputs.bundle_identifier }}" \
-          price_tier:0 \
-          skip_binary_upload:true \
-          skip_screenshots:true \
-          skip_metadata:true \
-          force:true
+        # Just run the custom lane that verifies app and provides instructions
+        bundle exec fastlane configure_pricing_and_availability bundle_id:"${{ github.event.inputs.bundle_identifier }}"
         
-        echo "✅ Pricing configuration completed"
+        echo "✅ Pricing verification completed"
       env:
         FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
         FASTLANE_SKIP_2FA_UPGRADE: 1

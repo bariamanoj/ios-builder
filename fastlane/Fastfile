@@ -160,42 +160,23 @@ platform :ios do
     UI.user_error!("App with bundle ID #{bundle_id} not found") if app.nil?
 
     UI.success("✅ Found app: #{app.name} (ID: #{app.id})")
+    UI.success("🔗 App Store Connect: https://appstoreconnect.apple.com/apps/#{app.id}/distribution/pricing")
     
-    begin
-      # Use deliver action for pricing configuration
-      UI.message("💰 Setting app pricing to FREE ($0.00) for all countries...")
-      
-      # Use deliver action with correct parameters
-      deliver(
-        app_identifier: bundle_id,
-        price_tier: 0,
-        skip_binary_upload: true,
-        skip_screenshots: true,
-        skip_metadata: true,
-        force: true,
-        overwrite_screenshots: false,
-        submit_for_review: false
-      )
-      
-      UI.success("✅ Pricing set to FREE for all countries")
-      UI.success("🔗 Verify at: https://appstoreconnect.apple.com/apps/#{app.id}/distribution/pricing")
-      
-    rescue => e
-      UI.error("❌ Automated pricing failed: #{e.message}")
-      UI.important("📋 MANUAL CONFIGURATION REQUIRED:")
-      UI.message("🔗 Go to: https://appstoreconnect.apple.com/apps/#{app.id}/distribution/pricing")
-      UI.message("")
-      UI.message("🏪 PRICING SETUP:")
-      UI.message("   1. Click: Add Pricing")
-      UI.message("   2. Base Country: United States (USD)")
-      UI.message("   3. Price: $0.00 (Free)")
-      UI.message("   4. Apply to all countries/regions")
-      UI.message("")
-      UI.message("🌍 AVAILABILITY SETUP:")
-      UI.message("   1. Click: Set Up Availability")
-      UI.message("   2. Select: All Countries or Regions")
-      UI.message("   3. Save changes")
-    end
+    UI.important("📋 MANUAL CONFIGURATION REQUIRED:")
+    UI.message("Apple's pricing APIs have changed - manual setup is the most reliable approach")
+    UI.message("")
+    UI.message("🏪 PRICING SETUP:")
+    UI.message("   1. Click: Add Pricing")
+    UI.message("   2. Base Country: United States (USD)")
+    UI.message("   3. Price: $0.00 (Free)")
+    UI.message("   4. Apply to all countries/regions")
+    UI.message("")
+    UI.message("🌍 AVAILABILITY SETUP:")
+    UI.message("   1. Click: Set Up Availability")
+    UI.message("   2. Select: All Countries or Regions")
+    UI.message("   3. Save changes")
+    
+    UI.success("🎯 App verification completed. Please complete manual setup above.")
   end
 
   desc "Complete build and upload process"
