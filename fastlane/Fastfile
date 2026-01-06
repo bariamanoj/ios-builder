@@ -269,8 +269,8 @@ platform :ios do
           type: 'appPrices',
           id: '${price-usa}',
           relationships: {
-            priceTier: {
-              data: { type: 'appPriceTiers', id: '0' }
+            appPricePoint: {
+              data: { type: 'appPricePoints', id: '0' }
             },
             territory: {
               data: { type: 'territories', id: 'USA' }
