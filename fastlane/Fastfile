@@ -155,32 +155,45 @@ platform :ios do
   lane :configure_pricing_and_availability do |options|
     bundle_id = options[:bundle_id] || "com.san.mainAp"
 
-    UI.success("✅ App Bundle ID: #{bundle_id}")
-    UI.success("✅ App Found: ManzTestApp2025 (ID: 6753968771)")
-    UI.success("🔗 Direct Link: https://appstoreconnect.apple.com/apps/6753968771/distribution/pricing")
+    UI.message("💰 Using official Fastlane upload_to_app_store with price_tier...")
     
-    UI.important("📋 PRICING & AVAILABILITY SETUP:")
-    UI.message("Apple's pricing APIs have changed - manual setup is required")
-    UI.message("")
-    UI.message("🏪 STEP 1 - PRICING:")
-    UI.message("   1. Click the blue 'Add Pricing' button")
-    UI.message("   2. Base Country: United States (USD)")
-    UI.message("   3. Price: $0.00 (Free)")
-    UI.message("   4. Click 'Apply to all countries/regions'")
-    UI.message("   5. Save")
-    UI.message("")
-    UI.message("🌍 STEP 2 - AVAILABILITY:")
-    UI.message("   1. Click the blue 'Set Up Availability' button")
-    UI.message("   2. Select: All Countries or Regions")
-    UI.message("   3. Save")
-    UI.message("")
-    UI.message("📱 APP DETAILS:")
-    UI.message("   • Name: ManzTestApp2025")
-    UI.message("   • Bundle ID: com.san.mainAp")
-    UI.message("   • Apple ID: 6753968771")
-    UI.message("   • SKU: ManzTestApp2025")
-    
-    UI.success("🎯 Setup complete! Your app will be FREE and available worldwide.")
+    begin
+      # Use the official upload_to_app_store action with price_tier parameter
+      upload_to_app_store(
+        app_identifier: bundle_id,
+        price_tier: 0,  # 0 = Free
+        skip_binary_upload: true,
+        skip_screenshots: true,
+        skip_metadata: true,
+        skip_app_version_update: true,
+        force: true,
+        submit_for_review: false,
+        automatic_release: false,
+        run_precheck_before_submit: false
+      )
+      
+      UI.success("✅ Automated pricing setup completed using official Fastlane action!")
+      UI.success("🔗 Verify at: https://appstoreconnect.apple.com/apps/6753968771/distribution/pricing")
+      
+    rescue => e
+      UI.error("❌ Official Fastlane action failed: #{e.message}")
+      UI.important("📋 MANUAL SETUP REQUIRED")
+      UI.message("🔗 Direct Link: https://appstoreconnect.apple.com/apps/6753968771/distribution/pricing")
+      UI.message("")
+      UI.message("🏪 STEP 1 - PRICING:")
+      UI.message("   1. Click the blue 'Add Pricing' button")
+      UI.message("   2. Base Country: United States (USD)")
+      UI.message("   3. Price: $0.00 (Free)")
+      UI.message("   4. Click 'Apply to all countries/regions'")
+      UI.message("   5. Save")
+      UI.message("")
+      UI.message("🌍 STEP 2 - AVAILABILITY:")
+      UI.message("   1. Click the blue 'Set Up Availability' button")
+      UI.message("   2. Select: All Countries or Regions")
+      UI.message("   3. Save")
+      UI.message("")
+      UI.success("✅ App: ManzTestApp2025 (ID: 6753968771, Bundle: #{bundle_id})")
+    end
   end
 
   desc "Complete build and upload process"
