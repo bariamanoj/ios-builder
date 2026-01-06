@@ -155,28 +155,30 @@ platform :ios do
   lane :configure_pricing_and_availability do |options|
     bundle_id = options[:bundle_id] || "com.san.mainAp"
 
-    UI.message("🔍 Finding app with bundle ID: #{bundle_id}")
-    app = Spaceship::ConnectAPI::App.find(bundle_id)
-    UI.user_error!("App with bundle ID #{bundle_id} not found") if app.nil?
-
-    UI.success("✅ Found app: #{app.name} (ID: #{app.id})")
-    UI.success("🔗 App Store Connect: https://appstoreconnect.apple.com/apps/#{app.id}/distribution/pricing")
+    UI.success("✅ App Bundle ID: #{bundle_id}")
+    UI.success("🔗 App Store Connect: https://appstoreconnect.apple.com/apps")
     
     UI.important("📋 MANUAL CONFIGURATION REQUIRED:")
-    UI.message("Apple's pricing APIs have changed - manual setup is the most reliable approach")
+    UI.message("Apple's App Store Connect APIs have changed - manual setup is required")
+    UI.message("")
+    UI.message("🔍 FIND YOUR APP:")
+    UI.message("   1. Go to: https://appstoreconnect.apple.com/apps")
+    UI.message("   2. Find app: ManzTestApp2025 (#{bundle_id})")
+    UI.message("   3. Click on the app name")
     UI.message("")
     UI.message("🏪 PRICING SETUP:")
-    UI.message("   1. Click: Add Pricing")
-    UI.message("   2. Base Country: United States (USD)")
-    UI.message("   3. Price: $0.00 (Free)")
-    UI.message("   4. Apply to all countries/regions")
+    UI.message("   1. Click: Distribution → Pricing and Availability")
+    UI.message("   2. Click: Add Pricing")
+    UI.message("   3. Base Country: United States (USD)")
+    UI.message("   4. Price: $0.00 (Free)")
+    UI.message("   5. Apply to all countries/regions")
     UI.message("")
     UI.message("🌍 AVAILABILITY SETUP:")
-    UI.message("   1. Click: Set Up Availability")
+    UI.message("   1. In the same page, click: Set Up Availability")
     UI.message("   2. Select: All Countries or Regions")
     UI.message("   3. Save changes")
     
-    UI.success("🎯 App verification completed. Please complete manual setup above.")
+    UI.success("🎯 Manual setup instructions provided. Please complete the steps above.")
   end
 
   desc "Complete build and upload process"
