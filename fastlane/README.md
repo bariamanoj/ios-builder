@@ -55,13 +55,13 @@ Upload metadata to App Store Connect
 
 Update privacy details
 
-### ios update_pricing_and_availability
+### ios configure_pricing_and_availability
 
 ```sh
-[bundle exec] fastlane ios update_pricing_and_availability
+[bundle exec] fastlane ios configure_pricing_and_availability
 ```
 
-Update app pricing and availability on App Store Connect
+Configure Pricing (Free) and Availability (All Countries)
 
 ### ios build_and_upload
 

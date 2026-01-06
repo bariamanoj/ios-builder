@@ -104,8 +104,11 @@ export FASTLANE_SESSION='---
 export FASTLANE_PASSWORD="Sanket_4392"
 export FASTLANE_SKIP_2FA_UPGRADE=1
 export FASTLANE_HIDE_CHANGELOG=1
+export APP_STORE_CONNECT_API_KEY_KEY_ID="762ZATSHW9"
+export APP_STORE_CONNECT_API_KEY_ISSUER_ID="69a6de92-0f0b-47fc-a463-0b4e4b9f8a2a"
+export APP_STORE_CONNECT_API_KEY_KEY="$(cat /Users/manzz/Mobibox/Lambda/ios\ fastlane/AuthKey_762ZATSHW9.p8)"
 
 cd "/Users/manzz/Mobibox/Lambda/ios fastlane/ios-builder"
 
 echo "💰 Running pricing update with fresh session token..."
-fastlane update_pricing_and_availability
+fastlane configure_pricing_and_availability bundle_id:"com.san.mainAp"
