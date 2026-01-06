@@ -244,16 +244,31 @@ platform :ios do
       UI.message("🌍 Found #{territory_ids.count} territories")
       
       # Configure pricing using App Store Connect API
-      # Create appPrices directly instead of trying to modify app relationships
-      pricing_uri = URI('https://api.appstoreconnect.apple.com/v1/appPrices')
+      # Use appPriceSchedules endpoint - the correct endpoint from OpenAPI spec
+      pricing_uri = URI('https://api.appstoreconnect.apple.com/v1/appPriceSchedules')
       
       pricing_payload = {
         data: {
-          type: 'appPrices',
+          type: 'appPriceSchedules',
           relationships: {
             app: {
               data: { type: 'apps', id: app_id }
             },
+            baseTerritory: {
+              data: { type: 'territories', id: 'USA' }
+            },
+            manualPrices: {
+              data: [{
+                type: 'appPrices',
+                id: '$price-usa'
+              }]
+            }
+          }
+        },
+        included: [{
+          type: 'appPrices',
+          id: '$price-usa',
+          relationships: {
             priceTier: {
               data: { type: 'appPriceTiers', id: '0' }
             },
@@ -261,7 +276,7 @@ platform :ios do
               data: { type: 'territories', id: 'USA' }
             }
           }
-        }
+        }]
       }
       
       pricing_request = Net::HTTP::Post.new(pricing_uri)
@@ -274,36 +289,6 @@ platform :ios do
       if pricing_response.code.start_with?('2')
         UI.success("🎉 Successfully configured app as FREE!")
         UI.success("✅ Price: $0.00 (Free)")
-        
-        # Set availability for all territories
-        territory_ids.each do |territory_id|
-          next if territory_id == 'USA' # Already set above
-          
-          territory_payload = {
-            data: {
-              type: 'appPrices',
-              relationships: {
-                app: {
-                  data: { type: 'apps', id: app_id }
-                },
-                priceTier: {
-                  data: { type: 'appPriceTiers', id: '0' }
-                },
-                territory: {
-                  data: { type: 'territories', id: territory_id }
-                }
-              }
-            }
-          }
-          
-          territory_request = Net::HTTP::Post.new(pricing_uri)
-          territory_request['Authorization'] = "Bearer #{token}"
-          territory_request['Content-Type'] = 'application/json'
-          territory_request.body = territory_payload.to_json
-          
-          http.request(territory_request)
-        end
-        
         UI.success("✅ Availability: All Countries/Regions")
       else
         raise "Pricing API call failed: #{pricing_response.code} - #{pricing_response.body}"
