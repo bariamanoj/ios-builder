@@ -272,22 +272,45 @@ platform :ios do
       # Set pricing to free ($0.00) for all territories
       UI.message("💰 Setting app pricing to FREE ($0.00) for all countries...")
       
-      # Get all available territories
+      # Use proper Spaceship API for pricing
+      require 'spaceship'
+      
+      # Get app pricing information
+      app_info = Spaceship::ConnectAPI::AppInfo.get(app_id: app.id)
+      
+      # Get all territories
       territories = Spaceship::ConnectAPI::Territory.all
       UI.message("🌍 Found #{territories.count} territories")
       
-      # Create pricing schedule for free app
-      pricing_info = {
-        price_tier: 0,  # Tier 0 = Free
-        start_date: nil,  # Immediate
-        territories: territories.map(&:id)
+      # Set app to free tier (0) for all territories
+      pricing_data = {
+        data: {
+          type: "appPrices",
+          attributes: {
+            startDate: nil
+          },
+          relationships: {
+            app: {
+              data: {
+                type: "apps",
+                id: app.id
+              }
+            },
+            priceTier: {
+              data: {
+                type: "appPriceTiers", 
+                id: "0"  # Free tier
+              }
+            },
+            territory: {
+              data: territories.map { |t| { type: "territories", id: t.id } }
+            }
+          }
+        }
       }
       
-      # Apply pricing using Spaceship
-      app.create_app_price_schedule(
-        base_territory: "USA",
-        price_tier: 0
-      )
+      # Apply pricing using direct API call
+      Spaceship::ConnectAPI.post("appPrices", pricing_data)
       
       UI.success("✅ Pricing set to FREE for all countries")
       UI.success("✅ Availability set to ALL COUNTRIES")
