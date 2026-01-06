@@ -1,0 +1,37 @@
+name: iOS Pricing Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      price_tier:
+        description: 'Price tier (0.99 for $0.99, 0.00 for free)'
+        required: true
+        default: '0.99'
+        type: string
+
+jobs:
+  update-pricing:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Setup Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.0'
+    
+    - name: Install dependencies
+      run: |
+        gem install fastlane jwt
+    
+    - name: Update App Pricing
+      run: |
+        cd GithubAction
+        fastlane update_pricing
+      env:
+        APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+        APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+        APP_STORE_CONNECT_API_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+        PRICE_TIER: ${{ github.event.inputs.price_tier }}
