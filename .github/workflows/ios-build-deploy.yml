@@ -222,6 +222,32 @@ jobs:
         FASTLANE_HIDE_CHANGELOG: 1
       continue-on-error: true
 
+    - name: Configure App Store Pricing and Availability
+      run: |
+        echo "💰 Configuring App Store pricing and availability..."
+        echo "📱 App: ${{ github.event.inputs.app_name }}"
+        echo "🆔 Bundle: ${{ github.event.inputs.bundle_identifier }}"
+        
+        # Clone the latest ios-builder to get updated Fastfile
+        cd /tmp
+        rm -rf ios-builder
+        git clone https://github.com/bariamanoj/ios-builder.git
+        cd ios-builder
+        
+        # Install dependencies
+        gem install fastlane spaceship
+        
+        # Run pricing configuration
+        fastlane configure_pricing_and_availability bundle_id:"${{ github.event.inputs.bundle_identifier }}"
+      env:
+        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+        APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        FASTLANE_SKIP_2FA_UPGRADE: 1
+        FASTLANE_HIDE_CHANGELOG: 1
+      continue-on-error: true
+
     - name: Upload to App Store Connect (Optional)
       run: |
         echo "🚀 Attempting to upload to App Store Connect"
@@ -240,14 +266,6 @@ jobs:
             skip_waiting_for_build_processing:true
             
           echo "✅ Upload completed!"
-          
-          # Configure pricing and availability
-          echo "💰 Configuring pricing and availability..."
-          cd /tmp
-          rm -rf ios-builder
-          git clone https://github.com/bariamanoj/ios-builder.git
-          cd ios-builder
-          fastlane configure_pricing_and_availability bundle_id:"${{ github.event.inputs.bundle_identifier }}"
         else
           echo "⚠️ No IPA found to upload"
         fi

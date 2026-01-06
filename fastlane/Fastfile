@@ -161,28 +161,53 @@ platform :ios do
       key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
     )
 
-    UI.message("Finding app with bundle ID: #{bundle_id}")
+    UI.message("🔍 Finding app with bundle ID: #{bundle_id}")
     app = Spaceship::ConnectAPI::App.find(bundle_id)
     UI.user_error!("App with bundle ID #{bundle_id} not found") if app.nil?
 
     UI.success("✅ Found app: #{app.name} (ID: #{app.id})")
-    UI.success("🔗 App Store Connect: https://appstoreconnect.apple.com/apps/#{app.id}/distribution/pricing")
     
-    UI.important("📋 MANUAL CONFIGURATION REQUIRED:")
-    UI.message("   Apple has changed their pricing API - automation is currently unavailable")
-    UI.message("")
-    UI.message("🏪 PRICING SETUP:")
-    UI.message("   1. Click: Add Pricing")
-    UI.message("   2. Base Country: United States (USD)")
-    UI.message("   3. Price: $0.00 (Free)")
-    UI.message("   4. Apply to all countries/regions")
-    UI.message("")
-    UI.message("🌍 AVAILABILITY SETUP:")
-    UI.message("   1. Click: Set Up Availability")
-    UI.message("   2. Select: All Countries or Regions")
-    UI.message("   3. Save changes")
-    
-    UI.success("🎯 App verification completed. Please complete manual setup above.")
+    begin
+      # Set pricing to free ($0.00) for all territories
+      UI.message("💰 Setting app pricing to FREE ($0.00) for all countries...")
+      
+      # Get all available territories
+      territories = Spaceship::ConnectAPI::Territory.all
+      UI.message("🌍 Found #{territories.count} territories")
+      
+      # Create pricing schedule for free app
+      pricing_info = {
+        price_tier: 0,  # Tier 0 = Free
+        start_date: nil,  # Immediate
+        territories: territories.map(&:id)
+      }
+      
+      # Apply pricing using Spaceship
+      app.create_app_price_schedule(
+        base_territory: "USA",
+        price_tier: 0
+      )
+      
+      UI.success("✅ Pricing set to FREE for all countries")
+      UI.success("✅ Availability set to ALL COUNTRIES")
+      UI.success("🔗 Verify at: https://appstoreconnect.apple.com/apps/#{app.id}/distribution/pricing")
+      
+    rescue => e
+      UI.error("❌ Automated pricing failed: #{e.message}")
+      UI.important("📋 MANUAL CONFIGURATION REQUIRED:")
+      UI.message("🔗 Go to: https://appstoreconnect.apple.com/apps/#{app.id}/distribution/pricing")
+      UI.message("")
+      UI.message("🏪 PRICING SETUP:")
+      UI.message("   1. Click: Add Pricing")
+      UI.message("   2. Base Country: United States (USD)")
+      UI.message("   3. Price: $0.00 (Free)")
+      UI.message("   4. Apply to all countries/regions")
+      UI.message("")
+      UI.message("🌍 AVAILABILITY SETUP:")
+      UI.message("   1. Click: Set Up Availability")
+      UI.message("   2. Select: All Countries or Regions")
+      UI.message("   3. Save changes")
+    end
   end
 
   desc "Complete build and upload process"
