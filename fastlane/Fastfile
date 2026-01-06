@@ -260,14 +260,14 @@ platform :ios do
             manualPrices: {
               data: [{
                 type: 'appPrices',
-                id: '$price-usa'
+                id: '${price-usa}'
               }]
             }
           }
         },
         included: [{
           type: 'appPrices',
-          id: '$price-usa',
+          id: '${price-usa}',
           relationships: {
             priceTier: {
               data: { type: 'appPriceTiers', id: '0' }
