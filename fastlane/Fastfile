@@ -189,39 +189,68 @@ platform :ios do
           app_id = app['id']
           UI.success("✅ Found app: #{app['attributes']['name']} (ID: #{app_id})")
           
-          # Set pricing to free (tier 0)
-          pricing_uri = URI("https://appstoreconnect.apple.com/iris/v1/apps/#{app_id}/prices")
-          pricing_request = Net::HTTP::Post.new(pricing_uri)
-          pricing_request['Cookie'] = cookies
-          pricing_request['Content-Type'] = 'application/json'
-          pricing_request['Accept'] = 'application/json'
+          # Set pricing to free (tier 0) - try different endpoint structures
+          pricing_endpoints = [
+            "https://appstoreconnect.apple.com/iris/v1/apps/#{app_id}/appPrices",
+            "https://appstoreconnect.apple.com/iris/v1/appPrices",
+            "https://appstoreconnect.apple.com/WebObjects/iTunesConnect.woa/ra/apps/#{app_id}/pricing",
+            "https://appstoreconnect.apple.com/iris/v1/apps/#{app_id}/relationships/prices"
+          ]
           
-          pricing_data = {
-            data: {
-              type: 'appPrices',
-              attributes: {
-                priceTier: 0
-              },
-              relationships: {
-                app: {
-                  data: {
-                    type: 'apps',
-                    id: app_id
+          success = false
+          pricing_endpoints.each_with_index do |endpoint, index|
+            UI.message("🔄 Trying pricing endpoint #{index + 1}/#{pricing_endpoints.length}...")
+            
+            pricing_uri = URI(endpoint)
+            pricing_request = Net::HTTP::Post.new(pricing_uri)
+            pricing_request['Cookie'] = cookies
+            pricing_request['Content-Type'] = 'application/json'
+            pricing_request['Accept'] = 'application/json'
+            pricing_request['X-Requested-With'] = 'XMLHttpRequest'
+            
+            pricing_data = {
+              data: {
+                type: 'appPrices',
+                attributes: {
+                  priceTier: 0,
+                  startDate: nil
+                },
+                relationships: {
+                  app: {
+                    data: {
+                      type: 'apps',
+                      id: app_id
+                    }
+                  },
+                  priceTier: {
+                    data: {
+                      type: 'appPriceTiers',
+                      id: '0'
+                    }
                   }
                 }
               }
             }
-          }
+            
+            pricing_request.body = pricing_data.to_json
+            pricing_response = http.request(pricing_request)
+            
+            UI.message("📡 Response: #{pricing_response.code} - #{pricing_response.message}")
+            
+            if pricing_response.code.start_with?('2')
+              UI.success("✅ Automated pricing setup completed via endpoint #{index + 1}!")
+              UI.success("🔗 Verify at: https://appstoreconnect.apple.com/apps/#{app_id}/distribution/pricing")
+              success = true
+              break
+            elsif pricing_response.code == '404'
+              UI.message("⚠️ Endpoint #{index + 1} not found, trying next...")
+            else
+              UI.message("⚠️ Endpoint #{index + 1} failed: #{pricing_response.code}")
+            end
+          end
           
-          pricing_request.body = pricing_data.to_json
-          pricing_response = http.request(pricing_request)
-          
-          if pricing_response.code.start_with?('2')
-            UI.success("✅ Automated pricing setup completed!")
-            UI.success("🔗 Verify at: https://appstoreconnect.apple.com/apps/#{app_id}/distribution/pricing")
-          else
-            UI.error("❌ Pricing API call failed: #{pricing_response.code}")
-            raise "API call failed"
+          unless success
+            raise "All pricing endpoints failed"
           end
         else
           raise "App not found"
