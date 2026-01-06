@@ -178,9 +178,8 @@ platform :ios do
       UI.message("🔑 Issuer ID: #{issuer_id}")
       UI.message("🔑 Key content length: #{key_content.length} characters")
       
-      # Use upload_to_app_store action with price_tier parameter
-      # This is the official Fastlane method for pricing configuration
-      upload_to_app_store(
+      # Use deliver action with price_tier parameter - the official documented method
+      deliver(
         api_key: {
           key_id: key_id,
           issuer_id: issuer_id,
@@ -191,7 +190,6 @@ platform :ios do
         skip_screenshots: true,
         skip_metadata: true,
         price_tier: 0,  # 0 = Free
-        submit_for_review: false,
         force: true
       )
       
