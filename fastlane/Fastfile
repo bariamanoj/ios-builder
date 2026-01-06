@@ -178,42 +178,24 @@ platform :ios do
       UI.message("🔑 Issuer ID: #{issuer_id}")
       UI.message("🔑 Key content length: #{key_content.length} characters")
       
-      # Create API token and set it globally
-      token = Spaceship::ConnectAPI::Token.create(
-        key_id: key_id,
-        issuer_id: issuer_id,
-        key: key_content
-      )
-      
-      # Set the token globally
-      Spaceship::ConnectAPI.token = token
-      
-      # Find the app using global methods
-      app = Spaceship::ConnectAPI::App.find(bundle_id)
-      if app.nil?
-        UI.error("❌ App not found with bundle ID: #{bundle_id}")
-        return
-      end
-      
-      UI.success("✅ Found app: #{app.name} (ID: #{app.id})")
-      
-      # Get all territories for availability
-      territories = Spaceship::ConnectAPI::Territory.all
-      territory_ids = territories.map(&:id)
-      
-      UI.message("🌍 Found #{territories.count} territories")
-      
-      # Configure pricing and availability using app.update
-      # Price tier 0 = Free
-      app.update(
-        attributes: {
-          availableInNewTerritories: true
+      # Use upload_to_app_store action with price_tier parameter
+      # This is the official Fastlane method for pricing configuration
+      upload_to_app_store(
+        api_key: {
+          key_id: key_id,
+          issuer_id: issuer_id,
+          key: key_content
         },
-        app_price_tier_id: "0",
-        territory_ids: territory_ids
+        app_identifier: bundle_id,
+        skip_binary_upload: true,
+        skip_screenshots: true,
+        skip_metadata: true,
+        price_tier: 0,  # 0 = Free
+        submit_for_review: false,
+        force: true
       )
       
-      UI.success("🎉 Successfully configured app as FREE in all territories!")
+      UI.success("🎉 Successfully configured app as FREE!")
       UI.success("✅ Price: $0.00 (Free)")
       UI.success("✅ Availability: All Countries/Regions")
       
