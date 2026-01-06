@@ -269,17 +269,15 @@ platform :ios do
     UI.success("✅ Found app: #{app.name} (ID: #{app.id})")
     
     begin
-      # Set pricing to free ($0.00) using deliver action with minimal parameters
+      # Simple pricing configuration using produce action
       UI.message("💰 Setting app pricing to FREE ($0.00) for all countries...")
       
-      # Use deliver with only essential pricing parameters
-      deliver(
+      # Use produce action to update app pricing only
+      produce(
         app_identifier: bundle_id,
         price_tier: 0,
-        skip_binary_upload: true,
-        skip_screenshots: true,
-        skip_metadata: true,
-        force: true
+        skip_itc: true,
+        skip_devcenter: true
       )
       
       UI.success("✅ Pricing set to FREE for all countries")
