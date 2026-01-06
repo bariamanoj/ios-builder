@@ -43,14 +43,16 @@ jobs:
       run: |
         echo "💰 Configuring App Store pricing and availability..."
         echo "🆔 Bundle: ${{ github.event.inputs.bundle_identifier }}"
-        echo "🔧 Using produce action for pricing configuration"
+        echo "🔧 Using deliver action for pricing configuration"
         
-        # Use produce action which is more reliable for pricing
-        fastlane run produce \
+        # Use deliver action with only pricing parameters
+        bundle exec fastlane run deliver \
           app_identifier:"${{ github.event.inputs.bundle_identifier }}" \
           price_tier:0 \
-          skip_itc:true \
-          skip_devcenter:true
+          skip_binary_upload:true \
+          skip_screenshots:true \
+          skip_metadata:true \
+          force:true
         
         echo "✅ Pricing configuration completed"
       env:
