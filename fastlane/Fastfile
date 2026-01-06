@@ -47,7 +47,7 @@ platform :ios do
       app_identifier: bundle_id,
       language: "en-US",
       app_version: "1.0",
-      sku: "#{bundle_id.gsub('.', '-')}-#{Time.now.to_i}",
+      sku: bundle_id == "com.san.mainAp" ? "ManzTestApp2025" : "#{bundle_id.gsub('.', '-')}-#{Time.now.to_i}",
       skip_itc: false,
       skip_devcenter: false
     )
