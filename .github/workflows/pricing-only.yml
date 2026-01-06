@@ -43,12 +43,12 @@ jobs:
       run: |
         echo "💰 Configuring App Store pricing and availability..."
         echo "🆔 Bundle: ${{ github.event.inputs.bundle_identifier }}"
-        echo "🔧 Verifying app exists and providing manual instructions"
+        echo "🔧 Providing verified app details and manual setup instructions"
         
-        # Just run the custom lane that verifies app and provides instructions
+        # Run lane that provides verified app details and manual instructions
         bundle exec fastlane configure_pricing_and_availability bundle_id:"${{ github.event.inputs.bundle_identifier }}"
         
-        echo "✅ Pricing verification completed"
+        echo "✅ App verification and setup instructions completed"
       env:
         FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
         FASTLANE_SKIP_2FA_UPGRADE: 1

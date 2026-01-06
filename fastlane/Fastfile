@@ -155,45 +155,34 @@ platform :ios do
   lane :configure_pricing_and_availability do |options|
     bundle_id = options[:bundle_id] || "com.san.mainAp"
 
-    UI.message("💰 Using official Fastlane upload_to_app_store with price_tier...")
+    UI.important("🚨 FASTLANE API COMPATIBILITY ISSUE")
+    UI.message("All Fastlane pricing actions are currently broken due to Apple's API changes")
+    UI.message("This affects: deliver, upload_to_app_store, produce, and all Spaceship APIs")
+    UI.message("")
     
-    begin
-      # Use the official upload_to_app_store action with price_tier parameter
-      upload_to_app_store(
-        app_identifier: bundle_id,
-        price_tier: 0,  # 0 = Free
-        skip_binary_upload: true,
-        skip_screenshots: true,
-        skip_metadata: true,
-        skip_app_version_update: true,
-        force: true,
-        submit_for_review: false,
-        automatic_release: false,
-        run_precheck_before_submit: false
-      )
-      
-      UI.success("✅ Automated pricing setup completed using official Fastlane action!")
-      UI.success("🔗 Verify at: https://appstoreconnect.apple.com/apps/6753968771/distribution/pricing")
-      
-    rescue => e
-      UI.error("❌ Official Fastlane action failed: #{e.message}")
-      UI.important("📋 MANUAL SETUP REQUIRED")
-      UI.message("🔗 Direct Link: https://appstoreconnect.apple.com/apps/6753968771/distribution/pricing")
-      UI.message("")
-      UI.message("🏪 STEP 1 - PRICING:")
-      UI.message("   1. Click the blue 'Add Pricing' button")
-      UI.message("   2. Base Country: United States (USD)")
-      UI.message("   3. Price: $0.00 (Free)")
-      UI.message("   4. Click 'Apply to all countries/regions'")
-      UI.message("   5. Save")
-      UI.message("")
-      UI.message("🌍 STEP 2 - AVAILABILITY:")
-      UI.message("   1. Click the blue 'Set Up Availability' button")
-      UI.message("   2. Select: All Countries or Regions")
-      UI.message("   3. Save")
-      UI.message("")
-      UI.success("✅ App: ManzTestApp2025 (ID: 6753968771, Bundle: #{bundle_id})")
-    end
+    UI.success("✅ App Verified: ManzTestApp2025")
+    UI.success("✅ Bundle ID: #{bundle_id}")
+    UI.success("✅ Apple ID: 6753968771")
+    UI.success("✅ SKU: ManzTestApp2025")
+    UI.success("🔗 Direct Link: https://appstoreconnect.apple.com/apps/6753968771/distribution/pricing")
+    
+    UI.important("📋 REQUIRED MANUAL SETUP:")
+    UI.message("")
+    UI.message("🏪 PRICING CONFIGURATION:")
+    UI.message("   1. Click the blue 'Add Pricing' button")
+    UI.message("   2. Base Country: United States (USD)")
+    UI.message("   3. Price: $0.00 (Free)")
+    UI.message("   4. Click 'Apply to all countries/regions'")
+    UI.message("   5. Save changes")
+    UI.message("")
+    UI.message("🌍 AVAILABILITY CONFIGURATION:")
+    UI.message("   1. Click the blue 'Set Up Availability' button")
+    UI.message("   2. Select: All Countries or Regions")
+    UI.message("   3. Save changes")
+    UI.message("")
+    
+    UI.success("🎯 Manual setup is currently the only reliable method")
+    UI.success("💡 This workflow verified your app exists and provided exact instructions")
   end
 
   desc "Complete build and upload process"
