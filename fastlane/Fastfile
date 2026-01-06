@@ -156,22 +156,45 @@ platform :ios do
     bundle_id = options[:bundle_id] || "com.san.mainAp"
 
     begin
+      # Check required environment variables
+      key_id = ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"]
+      issuer_id = ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"] 
+      key_content = ENV["APP_STORE_CONNECT_API_KEY_KEY"]
+      
+      if key_id.nil? || key_id.empty?
+        raise "APP_STORE_CONNECT_API_KEY_KEY_ID environment variable is missing"
+      end
+      
+      if issuer_id.nil? || issuer_id.empty?
+        raise "APP_STORE_CONNECT_API_KEY_ISSUER_ID environment variable is missing"
+      end
+      
+      if key_content.nil? || key_content.empty?
+        raise "APP_STORE_CONNECT_API_KEY_KEY environment variable is missing"
+      end
+      
+      UI.message("🔑 Using App Store Connect API key authentication")
+      UI.message("🔑 Key ID: #{key_id}")
+      UI.message("🔑 Issuer ID: #{issuer_id}")
+      UI.message("🔑 Key content length: #{key_content.length} characters")
+      
       # Create API token directly
       token = Spaceship::ConnectAPI::Token.create(
-        key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
-        issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
-        key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
+        key_id: key_id,
+        issuer_id: issuer_id,
+        key_content: key_content
       )
       
       # Initialize client with token
       client = Spaceship::ConnectAPI::Client.new(token: token)
       
-      UI.message("🔑 Using App Store Connect API key authentication")
-      
       # Find the app
-      app = client.get_app(app_id: nil, includes: nil).find { |a| a.bundle_id == bundle_id }
+      apps = client.get_apps
+      app = apps.find { |a| a.bundle_id == bundle_id }
       if app.nil?
         UI.error("❌ App not found with bundle ID: #{bundle_id}")
+        UI.message("Available apps:")
+        apps.each { |a| UI.message("  - #{a.name} (#{a.bundle_id})") }
         return
       end
       
