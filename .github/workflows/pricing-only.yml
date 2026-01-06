@@ -37,19 +37,21 @@ jobs:
         echo "📋 Current commit:"
         git log -1 --oneline
         echo "📁 Fastfile updated:"
-        grep -n "app_prices = app.prices" fastlane/Fastfile || echo "✅ Using updated pricing code"
+        grep -n "app_store_connect_api_key" fastlane/Fastfile || echo "⚠️ Using fallback method"
     
-    - name: Configure App Store Pricing and Availability ONLY
+    - name: Configure App Store Pricing and Availability
       run: |
         echo "💰 Configuring App Store pricing and availability..."
         echo "🆔 Bundle: ${{ github.event.inputs.bundle_identifier }}"
-        echo "🔧 Providing verified app details and manual setup instructions"
+        echo "🔑 Using App Store Connect API key authentication"
         
-        # Run lane that provides verified app details and manual instructions
+        # Run lane with API key authentication
         bundle exec fastlane configure_pricing_and_availability bundle_id:"${{ github.event.inputs.bundle_identifier }}"
         
-        echo "✅ App verification and setup instructions completed"
+        echo "✅ Pricing configuration completed"
       env:
-        FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+        APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         FASTLANE_SKIP_2FA_UPGRADE: 1
         FASTLANE_HIDE_CHANGELOG: 1
