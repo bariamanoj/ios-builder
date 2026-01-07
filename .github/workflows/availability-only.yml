@@ -33,8 +33,8 @@ jobs:
           echo "🌍 Setting up worldwide app availability..."
           echo "📱 App ID: ${{ github.event.inputs.app_id }}"
           
-          # Install fastlane
-          gem install fastlane
+          # Install specific working version of fastlane
+          gem install fastlane -v 2.219.0
           
           # Run the availability setup lane
           bundle exec fastlane setup_availability_manz
