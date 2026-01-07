@@ -32,90 +32,36 @@ platform :ios do
       token = JWT.encode(payload, private_key, 'ES256', { kid: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"] })
       UI.message("✅ Token created successfully")
       
-      # Try session-based authentication first
-      if ENV["FASTLANE_SESSION"] && !ENV["FASTLANE_SESSION"].empty?
-        UI.message("📊 Using session-based authentication...")
+      # Check app availability using standard API
+      response = sh("curl -s -w '%{http_code}' -X GET 'https://api.appstoreconnect.apple.com/v1/apps/#{app_id}/appAvailabilityV2' \
+        -H 'Authorization: Bearer #{token}' \
+        -H 'Content-Type: application/json'", capture_output: true)
+      
+      status_code = response.split("\n").last.gsub(/[^0-9]/, '')
+      response_body = response.split("\n")[0..-2].join("\n")
+      
+      UI.message("📊 AppAvailabilityV2 Response: #{status_code}")
+      
+      if status_code.to_i >= 200 && status_code.to_i < 300
+        UI.success("✅ Successfully retrieved app availability!")
+        UI.message("📊 Response: #{response_body}")
         
-        # Extract myacinfo value from FASTLANE_SESSION YAML
-        session_yaml = ENV["FASTLANE_SESSION"]
-        myacinfo_match = session_yaml.match(/name: myacinfo\s+value: ([^\s\n]+)/)
-        
-        if myacinfo_match
-          clean_session = myacinfo_match[1]
-          UI.message("📊 Extracted session token: #{clean_session[0..50]}...")
+        if response_body.include?('"availableInNewTerritories" : false')
+          UI.message("🔄 App availability is currently set to false")
+          UI.message("📋 Current status: availableInNewTerritories = false")
+          UI.message("🎯 This means the app is NOT automatically available in new territories")
+          UI.message("🔧 To enable worldwide availability, you need to:")
+          UI.message("   1. Go to App Store Connect: https://appstoreconnect.apple.com/apps/6753968771/distribution/pricing")
+          UI.message("   2. Navigate to Pricing and Availability")
+          UI.message("   3. Enable 'Make this app available in new territories'")
+          UI.message("   4. Or manually select all territories where you want the app available")
+          UI.success("✅ App availability check completed - manual action required")
         else
-          UI.error("❌ Could not extract myacinfo from FASTLANE_SESSION")
-          clean_session = ""
-        end
-        
-        # Try standard App Store Connect API instead of iris
-        response = sh("curl -s -w '%{http_code}' -X GET 'https://api.appstoreconnect.apple.com/v1/apps/#{app_id}' \
-          -H 'Authorization: Bearer #{token}' \
-          -H 'Content-Type: application/json'", capture_output: true)
-        
-        status_code = response.split("\n").last.gsub(/[^0-9]/, '')
-        response_body = response.split("\n")[0..-2].join("\n")
-        
-        UI.message("📊 Standard API Response: #{status_code}")
-        
-        if status_code.to_i >= 200 && status_code.to_i < 300
-          UI.success("✅ App found - trying to set availability via standard API")
-          
-          # Try the appAvailabilityV2 endpoint (modern approach)
-        UI.message("📊 Trying appAvailabilityV2 endpoint...")
-        
-        v2_response = sh("curl -s -w '%{http_code}' -X GET 'https://api.appstoreconnect.apple.com/v1/apps/#{app_id}/appAvailabilityV2' \
-          -H 'Authorization: Bearer #{token}' \
-          -H 'Content-Type: application/json'", capture_output: true)
-        
-        v2_status = v2_response.split("\n").last.gsub(/[^0-9]/, '')
-        v2_body = v2_response.split("\n")[0..-2].join("\n")
-        
-        UI.message("📊 AppAvailabilityV2 Response: #{v2_status}")
-        
-        if v2_status.to_i >= 200 && v2_status.to_i < 300
-          UI.success("✅ Successfully retrieved appAvailabilityV2!")
-          UI.message("📊 V2 data: #{v2_body}")
-          
-          # Use the exact API call from manual setup with session authentication
-          if v2_body.include?('"availableInNewTerritories" : false')
-            UI.message("🔄 App availability is currently set to false")
-            UI.message("📋 Current status: availableInNewTerritories = false")
-            UI.message("🎯 This means the app is NOT automatically available in new territories")
-            UI.message("🔧 To enable worldwide availability, you need to:")
-            UI.message("   1. Go to App Store Connect: https://appstoreconnect.apple.com/apps/6753968771/distribution/pricing")
-            UI.message("   2. Navigate to Pricing and Availability")
-            UI.message("   3. Enable 'Make this app available in new territories'")
-            UI.message("   4. Or manually select all territories where you want the app available")
-            UI.success("✅ App availability check completed - manual action required")
-          else
-            UI.success("✅ App is already available in new territories!")
-          end
-          else
-            UI.success("✅ App is already available in new territories!")
-          end
-        else
-          UI.message("📊 V2 failed: #{v2_status} - #{v2_body}")
+          UI.success("✅ App is already available in new territories!")
         end
       else
-        UI.message("📊 Standard API failed: #{status_code} - #{response_body}")
-        
-        # Use JWT token authentication with standard API
-        UI.message("📊 Using JWT token authentication with standard API...")
-        
-        response = sh("curl -s -w '%{http_code}' -X GET 'https://api.appstoreconnect.apple.com/v1/apps/#{app_id}' \
-          -H 'Authorization: Bearer #{token}' \
-          -H 'Content-Type: application/json'", capture_output: true)
-        
-        status_code = response.split("\n").last
-        response_body = response.split("\n")[0..-2].join("\n")
-        
-        UI.message("📊 JWT API Response: #{status_code}")
-        UI.message("📊 Response: #{status_code} - #{response_body}")
+        UI.message("📊 API failed: #{status_code} - #{response_body}")
       end
-    else
-      UI.message("📊 No session token available, using JWT only")
-    end
       
     rescue => e
       UI.error("❌ Error setting up availability: #{e.message}")
@@ -123,8 +69,6 @@ platform :ios do
     end
     
     UI.success("✅ Setup completed - please verify in App Store Connect")
-    UI.success("✅ Successfully configured app metadata and availability!")
-    UI.success("🎉 App should now be available worldwide with proper configuration!")
     UI.message("🔗 Check App Store Connect: https://appstoreconnect.apple.com/apps/#{app_id}/distribution/pricing")
   end
 end
