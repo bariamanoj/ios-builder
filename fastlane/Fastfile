@@ -11,23 +11,10 @@ platform :ios do
     begin
       require 'json'
       
-      # Skip privacy details for now and focus on availability
-      UI.message("⏭️ Skipping privacy details upload - focusing on availability setup")
+      # Skip privacy details and produce - focus on deliver for availability
+      UI.message("⏭️ Skipping privacy details and produce - focusing on deliver for availability setup")
       
-      # Use produce to ensure app is properly configured
-      UI.message("📱 Configuring app with produce...")
-      produce(
-        username: "dohrasanket@gmail.com",
-        app_identifier: "com.san.mainAp",
-        app_name: "ManzTestApp2025",
-        language: "en-US",
-        app_version: "1.0",
-        sku: "ManzTestApp2025",
-        skip_itc: false,
-        skip_devcenter: true
-      )
-      
-      # Use deliver to set up metadata and availability
+      # Use deliver directly to set up metadata and availability
       UI.message("📊 Using deliver to configure app metadata and availability...")
       deliver(
         username: "dohrasanket@gmail.com",
