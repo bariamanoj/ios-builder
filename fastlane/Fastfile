@@ -51,97 +51,23 @@ platform :ios do
         if status_code.to_i >= 200 && status_code.to_i < 300
           UI.success("✅ App found - trying to set availability via standard API")
           
-          # Try the bulk update endpoint for app availability
-        UI.message("📊 Using bulk update endpoint for app availability...")
+          # Try the appAvailabilityV2 endpoint (modern approach)
+        UI.message("📊 Trying appAvailabilityV2 endpoint...")
         
-        # Create the bulk update payload with all territories
-        bulk_payload = {
-          data: {
-            type: "bulkUpdateAppAvailabilities",
-            attributes: {
-              availableInNewTerritories: true
-            },
-            relationships: {
-              app: {
-                data: {
-                  type: "apps",
-                  id: app_id
-                }
-              },
-              territoryAvailabilities: {
-                data: [
-                  { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJVU0EifQ==}" },
-                  { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJHQlIifQ==}" },
-                  { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJDQU4ifQ==}" },
-                  { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJBVVMifQ==}" },
-                  { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJERVUifQ==}" }
-                ]
-              }
-            }
-          },
-          included: [
-            {
-              type: "territoryAvailabilities",
-              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJVU0EifQ==}",
-              attributes: { available: true },
-              relationships: { territory: { data: { type: "territories", id: "USA" } } }
-            },
-            {
-              type: "territoryAvailabilities",
-              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJHQlIifQ==}",
-              attributes: { available: true },
-              relationships: { territory: { data: { type: "territories", id: "GBR" } } }
-            },
-            {
-              type: "territoryAvailabilities",
-              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJDQU4ifQ==}",
-              attributes: { available: true },
-              relationships: { territory: { data: { type: "territories", id: "CAN" } } }
-            },
-            {
-              type: "territoryAvailabilities",
-              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJBVVMifQ==}",
-              attributes: { available: true },
-              relationships: { territory: { data: { type: "territories", id: "AUS" } } }
-            },
-            {
-              type: "territoryAvailabilities",
-              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJERVUifQ==}",
-              attributes: { available: true },
-              relationships: { territory: { data: { type: "territories", id: "DEU" } } }
-            }
-          ]
-        }
+        v2_response = sh("curl -s -w '%{http_code}' -X GET 'https://api.appstoreconnect.apple.com/v1/apps/#{app_id}/appAvailabilityV2' \
+          -H 'Authorization: Bearer #{token}' \
+          -H 'Content-Type: application/json'", capture_output: true)
         
-        bulk_response = sh("curl -s -w '%{http_code}' -X POST 'https://appstoreconnect.apple.com/iris/v1/bulkUpdateAppAvailabilities' \
-          -H 'Content-Type: application/json' \
-          -H 'Accept: application/json' \
-          -H 'Cookie: myacinfo=#{clean_session}' \
-          -H 'X-Requested-With: XMLHttpRequest' \
-          -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' \
-          -d '#{bulk_payload.to_json}'", capture_output: true)
+        v2_status = v2_response.split("\n").last.gsub(/[^0-9]/, '')
+        v2_body = v2_response.split("\n")[0..-2].join("\n")
         
-        bulk_status = bulk_response.split("\n").last
-        bulk_body = bulk_response.split("\n")[0..-2].join("\n")
+        UI.message("📊 AppAvailabilityV2 Response: #{v2_status}")
         
-        UI.message("📊 Bulk Update Response: #{bulk_status}")
-        
-        if bulk_status.to_i >= 200 && bulk_status.to_i < 300
-          UI.success("✅ Successfully updated app availability using bulk endpoint!")
+        if v2_status.to_i >= 200 && v2_status.to_i < 300
+          UI.success("✅ Successfully retrieved appAvailabilityV2!")
+          UI.message("📊 V2 data: #{v2_body}")
         else
-          UI.message("📊 Bulk Response: #{bulk_status} - #{bulk_body}")
-          
-          # Try with JWT token
-          jwt_bulk_response = sh("curl -s -w '%{http_code}' -X POST 'https://appstoreconnect.apple.com/iris/v1/bulkUpdateAppAvailabilities' \
-            -H 'Content-Type: application/json' \
-            -H 'Accept: application/json' \
-            -H 'Authorization: Bearer #{token}' \
-            -d '#{bulk_payload.to_json}'", capture_output: true)
-          
-          jwt_bulk_status = jwt_bulk_response.split("\n").last
-          jwt_bulk_body = jwt_bulk_response.split("\n")[0..-2].join("\n")
-          
-          UI.message("📊 JWT Bulk Response: #{jwt_bulk_status} - #{jwt_bulk_body}")
+          UI.message("📊 V2 failed: #{v2_status} - #{v2_body}")
         end
           
         else
