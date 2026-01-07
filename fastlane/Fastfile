@@ -79,29 +79,18 @@ platform :ios do
           
           # Use the exact API call from manual setup with session authentication
           if v2_body.include?('"availableInNewTerritories" : false')
-            UI.message("🔄 Setting up Spaceship authentication and using deliver...")
-            
-            begin
-              # Set up Spaceship authentication properly
-              Spaceship::ConnectAPI.login(
-                key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
-                issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
-                key: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
-              )
-              
-              # Use deliver with proper authentication
-              deliver(
-                app_identifier: "com.mobibox.manztestapp2025",
-                skip_screenshots: true,
-                skip_metadata: true,
-                skip_app_version_update: true,
-                force: true
-              )
-              UI.success("🎉 Successfully updated app availability using Fastlane deliver!")
-            rescue => e
-              UI.message("📊 Deliver failed: #{e.message}")
-              UI.success("✅ App availability check completed - manual verification needed")
-            end
+            UI.message("🔄 App availability is currently set to false")
+            UI.message("📋 Current status: availableInNewTerritories = false")
+            UI.message("🎯 This means the app is NOT automatically available in new territories")
+            UI.message("🔧 To enable worldwide availability, you need to:")
+            UI.message("   1. Go to App Store Connect: https://appstoreconnect.apple.com/apps/6753968771/distribution/pricing")
+            UI.message("   2. Navigate to Pricing and Availability")
+            UI.message("   3. Enable 'Make this app available in new territories'")
+            UI.message("   4. Or manually select all territories where you want the app available")
+            UI.success("✅ App availability check completed - manual action required")
+          else
+            UI.success("✅ App is already available in new territories!")
+          end
           else
             UI.success("✅ App is already available in new territories!")
           end
