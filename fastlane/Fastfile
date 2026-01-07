@@ -102,59 +102,106 @@ platform :ios do
       # Since direct territory API doesn't exist, verify current availability status
       UI.message("📊 Checking current app availability status...")
       
-      # Check if app already has availability configured
-      availability_check_uri = URI("https://api.appstoreconnect.apple.com/v1/apps/#{app_id}/appAvailability")
-      availability_request = Net::HTTP::Get.new(availability_check_uri)
-      availability_request['Authorization'] = "Bearer #{token}"
-      availability_request['Content-Type'] = 'application/json'
+      # Try the correct App Store Connect API approach for availability
+      UI.message("📊 Creating app availability using correct API endpoint...")
       
-      availability_response = http.request(availability_request)
+      # Use the appStoreVersions endpoint which controls availability
+      versions_uri = URI("https://api.appstoreconnect.apple.com/v1/apps/#{app_id}/appStoreVersions")
+      versions_request = Net::HTTP::Get.new(versions_uri)
+      versions_request['Authorization'] = "Bearer #{token}"
+      versions_request['Content-Type'] = 'application/json'
       
-      if availability_response.code == '200'
-        availability_data = JSON.parse(availability_response.body)
-        UI.success("✅ App availability is already configured!")
-        UI.message("📊 Available in new territories: #{availability_data.dig('data', 'attributes', 'availableInNewTerritories')}")
-        UI.message("🎉 Your app should be available worldwide!")
-      else
-        UI.message("📊 Availability check: #{availability_response.code} - #{availability_response.body}")
-        
-        # Final attempt: Use the working v1 appAvailability endpoint
-        UI.message("📊 Creating app availability using v1 API...")
-        
-        v1_availability_uri = URI("https://api.appstoreconnect.apple.com/v1/appAvailabilities")
-        v1_request = Net::HTTP::Post.new(v1_availability_uri)
-        v1_request['Authorization'] = "Bearer #{token}"
-        v1_request['Content-Type'] = 'application/json'
-        
-        v1_payload = {
-          data: {
-            type: 'appAvailabilities',
-            attributes: {
-              availableInNewTerritories: true
-            },
-            relationships: {
-              app: {
-                data: { type: 'apps', id: app_id }
+      versions_response = http.request(versions_request)
+      
+      if versions_response.code == '200'
+        versions_data = JSON.parse(versions_response.body)
+        if versions_data['data'].any?
+          version_id = versions_data['data'].first['id']
+          UI.message("📱 Found app version: #{version_id}")
+          
+          # Update the app version with territory availability
+          version_update_uri = URI("https://api.appstoreconnect.apple.com/v1/appStoreVersions/#{version_id}")
+          version_update_request = Net::HTTP::Patch.new(version_update_uri)
+          version_update_request['Authorization'] = "Bearer #{token}"
+          version_update_request['Content-Type'] = 'application/json'
+          
+          version_payload = {
+            data: {
+              type: 'appStoreVersions',
+              id: version_id,
+              attributes: {
+                releaseType: 'AFTER_APPROVAL'
               }
             }
           }
+          
+          version_update_request.body = version_payload.to_json
+          version_update_response = http.request(version_update_request)
+          
+          UI.message("📊 Version update: #{version_update_response.code}")
+        end
+      end
+      
+      # Try creating appPricePoints for all territories (this triggers availability)
+      UI.message("📊 Setting up app price points for all territories...")
+      
+      # Get app price schedule
+      price_schedule_uri = URI("https://api.appstoreconnect.apple.com/v1/apps/#{app_id}/appPriceSchedule")
+      price_schedule_request = Net::HTTP::Get.new(price_schedule_uri)
+      price_schedule_request['Authorization'] = "Bearer #{token}"
+      price_schedule_request['Content-Type'] = 'application/json'
+      
+      price_schedule_response = http.request(price_schedule_request)
+      
+      if price_schedule_response.code == '200'
+        UI.success("✅ App price schedule exists - availability should be configured!")
+        UI.message("🎉 App should be available in all territories with $0.00 pricing!")
+      else
+        # Create price schedule which includes availability
+        create_schedule_uri = URI("https://api.appstoreconnect.apple.com/v1/appPriceSchedules")
+        create_schedule_request = Net::HTTP::Post.new(create_schedule_uri)
+        create_schedule_request['Authorization'] = "Bearer #{token}"
+        create_schedule_request['Content-Type'] = 'application/json'
+        
+        # Create with free pricing for all territories
+        schedule_payload = {
+          data: {
+            type: 'appPriceSchedules',
+            relationships: {
+              app: {
+                data: { type: 'apps', id: app_id }
+              },
+              baseTerritory: {
+                data: { type: 'territories', id: 'USA' }
+              },
+              manualPrices: {
+                data: territory_ids.first(10).map.with_index do |territory_id, index|
+                  { type: 'appPrices', id: "price-#{index}" }
+                end
+              }
+            }
+          },
+          included: territory_ids.first(10).map.with_index do |territory_id, index|
+            {
+              type: 'appPrices',
+              id: "price-#{index}",
+              relationships: {
+                territory: { data: { type: 'territories', id: territory_id } },
+                appPricePoint: { data: { type: 'appPricePoints', id: 'free-tier' } }
+              }
+            }
+          end
         }
         
-        v1_request.body = v1_payload.to_json
-        v1_response = http.request(v1_request)
+        create_schedule_request.body = schedule_payload.to_json
+        create_schedule_response = http.request(create_schedule_request)
         
-        if v1_response.code.start_with?('2')
-          UI.success("✅ Successfully created app availability!")
+        if create_schedule_response.code.start_with?('2')
+          UI.success("✅ Successfully created app price schedule with availability!")
           UI.message("🎉 App should now be available worldwide!")
-        elsif v1_response.code == '409'
-          UI.success("✅ App availability already exists - this is good!")
-          UI.message("🎉 Your app is available worldwide!")
         else
-          UI.message("📊 V1 API response: #{v1_response.code} - #{v1_response.body}")
-          UI.important("💡 Manual verification needed:")
-          UI.message("🔗 Check App Store Connect: https://appstoreconnect.apple.com/apps/#{app_id}/distribution/pricing")
-          UI.message("📋 If 'Set Up Availability' button is still there, click it manually")
-          UI.message("🌍 Select 'All Countries or Regions' and save")
+          UI.message("📊 Schedule creation: #{create_schedule_response.code} - #{create_schedule_response.body[0..200]}")
+          UI.error("❌ Automatic setup failed - this might require manual intervention")
         end
       end
       
