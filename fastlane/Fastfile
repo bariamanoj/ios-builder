@@ -67,47 +67,32 @@ platform :ios do
           UI.success("✅ Successfully retrieved appAvailabilityV2!")
           UI.message("📊 V2 data: #{v2_body}")
           
-          # Check if availableInNewTerritories is false and create new availability
+          # Use the exact API call from manual setup with session authentication
           if v2_body.include?('"availableInNewTerritories" : false')
-            UI.message("🔄 Creating worldwide availability (simplified approach)...")
+            UI.message("🔄 Using exact manual setup API call with session authentication...")
             
-            # Use a simple approach - just set availableInNewTerritories to true
-            # The API should handle territory setup automatically
-            create_payload = {
-              data: {
-                type: "appAvailabilities",
-                attributes: {
-                  availableInNewTerritories: true
-                },
-                relationships: {
-                  app: {
-                    data: {
-                      type: "apps",
-                      id: app_id
-                    }
-                  }
-                }
-              }
-            }
+            # Read the complete payload from the file
+            payload_file = File.read('/Users/manzz/Desktop/update_app_avaibility_api.txt')
+            payload_json = payload_file.split("\n")[3..-1].join("\n").strip
             
-            # Try the iris bulk update endpoint as a fallback
-            iris_response = sh("curl -s -w '%{http_code}' -X POST 'https://appstoreconnect.apple.com/iris/v1/bulkUpdateAppAvailabilities' \
+            # Use session authentication (Cookie header) as captured from manual setup
+            manual_response = sh("curl -s -w '%{http_code}' -X POST 'https://appstoreconnect.apple.com/iris/v1/bulkUpdateAppAvailabilities' \
               -H 'Content-Type: application/json' \
               -H 'Accept: application/json' \
-              -H 'Authorization: Bearer #{token}' \
-              -d '{\"data\":{\"type\":\"bulkUpdateAppAvailabilities\",\"attributes\":{\"availableInNewTerritories\":true},\"relationships\":{\"app\":{\"data\":{\"type\":\"apps\",\"id\":\"#{app_id}\"}}}}}' \
-              ", capture_output: true)
+              -H 'Cookie: myacinfo=#{clean_session}' \
+              -H 'X-Requested-With: XMLHttpRequest' \
+              -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' \
+              -d '#{payload_json}'", capture_output: true)
             
-            iris_status = iris_response.split("\n").last.gsub(/[^0-9]/, '')
-            iris_body = iris_response.split("\n")[0..-2].join("\n")
+            manual_status = manual_response.split("\n").last.gsub(/[^0-9]/, '')
+            manual_body = manual_response.split("\n")[0..-2].join("\n")
             
-            UI.message("📊 Iris Response: #{iris_status}")
+            UI.message("📊 Manual API Response: #{manual_status}")
             
-            if iris_status.to_i >= 200 && iris_status.to_i < 300
-              UI.success("🎉 Successfully enabled worldwide availability via iris!")
+            if manual_status.to_i >= 200 && manual_status.to_i < 300
+              UI.success("🎉 Successfully enabled worldwide availability using manual API!")
             else
-              UI.message("📊 Iris failed: #{iris_status} - #{iris_body}")
-              UI.message("ℹ️  Manual setup may be required in App Store Connect")
+              UI.message("📊 Manual API failed: #{manual_status} - #{manual_body}")
             end
           else
             UI.success("✅ App is already available in new territories!")
