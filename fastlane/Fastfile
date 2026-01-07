@@ -9,7 +9,9 @@ platform :ios do
     UI.message("📱 App ID: #{app_id}")
     
     begin
-      # Create app privacy details JSON file
+      require 'json'
+      
+      # Create app privacy details JSON file in fastlane directory
       privacy_details = [
         {
           "data_protections": [
@@ -18,16 +20,18 @@ platform :ios do
         }
       ]
       
-      # Write privacy details to file
-      File.write("app_privacy_details.json", JSON.pretty_generate(privacy_details))
-      UI.message("📋 Created app privacy details configuration")
+      # Ensure fastlane directory exists and write privacy details
+      Dir.mkdir("fastlane") unless Dir.exist?("fastlane")
+      privacy_file_path = "fastlane/app_privacy_details.json"
+      File.write(privacy_file_path, JSON.pretty_generate(privacy_details))
+      UI.message("📋 Created app privacy details at #{privacy_file_path}")
       
       # Upload app privacy details first
       UI.message("🔒 Uploading app privacy details...")
       upload_app_privacy_details_to_app_store(
         username: "dohrasanket@gmail.com",
         app_identifier: "com.san.mainAp",
-        json_path: "app_privacy_details.json"
+        json_path: privacy_file_path
       )
       UI.success("✅ App privacy details uploaded successfully!")
       
