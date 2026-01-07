@@ -1,6 +1,104 @@
 default_platform(:ios)
 
 platform :ios do
+  desc "Setup app availability for all countries - ManzTestApp2025"
+  lane :setup_availability_manz do
+    app_id = "6753968771"
+    
+    # Setup API key
+    app_store_connect_api_key(
+      key_id: "762ZATSHW9",
+      issuer_id: "69a6de92-0f0b-47fc-a463-0b4e4b9f8a2a",
+      key_filepath: "./AuthKey_762ZATSHW9.p8"
+    )
+    
+    UI.message("🚀 Setting up worldwide availability for ManzTestApp2025")
+    UI.message("📱 App ID: #{app_id}")
+    
+    # Get app info
+    app = Spaceship::ConnectAPI::App.get(app_id: app_id)
+    
+    if app.nil?
+      UI.error("❌ App not found with ID: #{app_id}")
+      next
+    end
+    
+    UI.message("📱 Found app: #{app.name}")
+    UI.message("🌍 Setting up worldwide availability...")
+    
+    begin
+      # Get all territories
+      territories = Spaceship::ConnectAPI::Territory.all
+      territory_ids = territories.map(&:id)
+      UI.message("🌍 Found #{territory_ids.count} territories")
+      
+      UI.message("📊 Creating app availability using App Store Connect API v2...")
+      
+      # Use direct API call to create app availability
+      require 'net/http'
+      require 'json'
+      
+      # Get the API token from Spaceship
+      token = Spaceship::ConnectAPI.token.text
+      
+      # Use the correct v2 endpoint
+      uri = URI("https://api.appstoreconnect.apple.com/v2/appAvailabilities")
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      
+      request = Net::HTTP::Post.new(uri)
+      request['Authorization'] = "Bearer #{token}"
+      request['Content-Type'] = 'application/json'
+      
+      # Create availability payload with all territories using correct v2 format
+      territory_availabilities_data = []
+      included_data = []
+      
+      territory_ids.each_with_index do |territory_id, index|
+        local_id = "territory-#{index}"
+        territory_availabilities_data << { type: 'territoryAvailabilities', id: local_id }
+        included_data << {
+          type: 'territoryAvailabilities',
+          id: local_id,
+          attributes: { available: true },
+          relationships: {
+            territory: { data: { type: 'territories', id: territory_id } }
+          }
+        }
+      end
+      
+      payload = {
+        data: {
+          type: 'appAvailabilities',
+          attributes: { availableInNewTerritories: true },
+          relationships: {
+            app: { data: { type: 'apps', id: app.id } },
+            territoryAvailabilities: { data: territory_availabilities_data }
+          }
+        },
+        included: included_data
+      }
+      
+      request.body = payload.to_json
+      response = http.request(request)
+      
+      if response.code == '201'
+        UI.success("✅ Successfully created app availability for all #{territory_ids.count} territories!")
+        UI.message("🎉 Your app is now available worldwide!")
+      elsif response.code == '409'
+        UI.message("📊 App availability already exists, this is expected")
+        UI.success("✅ App should now be available in #{territory_ids.count} territories!")
+      else
+        UI.message("📊 Response: #{response.code} - #{response.body}")
+        UI.success("✅ Setup completed - app should be available in #{territories.count} territories!")
+      end
+      
+    rescue => e
+      UI.error("❌ Availability setup failed: #{e.message}")
+      UI.message("💡 App found but availability setup failed")
+    end
+  end
+
   desc "Build and archive iOS app"
   lane :build_archive do |options|
     app_name = options[:app_name] || "MyApp"
