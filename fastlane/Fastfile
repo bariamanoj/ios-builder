@@ -30,6 +30,7 @@ platform :ios do
       app_uri = URI("https://api.appstoreconnect.apple.com/v1/apps/#{app_id}")
       http = Net::HTTP.new(app_uri.host, app_uri.port)
       http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
       
       app_request = Net::HTTP::Get.new(app_uri)
       app_request['Authorization'] = "Bearer #{token}"
