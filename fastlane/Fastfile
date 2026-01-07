@@ -15,15 +15,24 @@ platform :ios do
       
       UI.message("🔑 Creating JWT token...")
       
-      # Create API key token
-      api_key = Spaceship::ConnectAPI::Token.create(
-        key_id: "762ZATSHW9",
-        issuer_id: "69a6de92-0f0b-47fc-a463-0b4e4b9f8a2a",
-        filepath: "../AuthKey_762ZATSHW9.p8"
-      )
+      # Create JWT token manually to ensure it's correct
+      require 'jwt'
       
-      # Get the API token text directly
-      token = api_key.text
+      # Read the private key
+      private_key_content = File.read("../AuthKey_762ZATSHW9.p8")
+      private_key = OpenSSL::PKey::EC.new(private_key_content)
+      
+      # Create JWT payload
+      now = Time.now.to_i
+      payload = {
+        iss: "69a6de92-0f0b-47fc-a463-0b4e4b9f8a2a",
+        exp: now + (20 * 60), # 20 minutes
+        aud: "appstoreconnect-v1"
+      }
+      
+      # Create JWT token
+      token = JWT.encode(payload, private_key, 'ES256', { kid: "762ZATSHW9" })
+      
       UI.message("🔑 Token created successfully (length: #{token.length})")
       
       # Get app info using direct HTTP call
