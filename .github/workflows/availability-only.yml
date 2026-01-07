@@ -24,8 +24,9 @@ jobs:
           
       - name: Setup App Store Connect API Key
         run: |
-          # Key file already exists in repository
+          # Verify key file exists
           ls -la AuthKey_762ZATSHW9.p8
+          echo "✅ API key file found"
           
       - name: Setup App Availability
         run: |
