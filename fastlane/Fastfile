@@ -36,7 +36,17 @@ platform :ios do
       if ENV["FASTLANE_SESSION"] && !ENV["FASTLANE_SESSION"].empty?
         UI.message("📊 Using session-based authentication...")
         
-        clean_session = ENV["FASTLANE_SESSION"].strip.gsub(/[\r\n]/, '')
+        # Extract myacinfo value from FASTLANE_SESSION YAML
+        session_yaml = ENV["FASTLANE_SESSION"]
+        myacinfo_match = session_yaml.match(/name: myacinfo\s+value: ([^\s\n]+)/)
+        
+        if myacinfo_match
+          clean_session = myacinfo_match[1]
+          UI.message("📊 Extracted session token: #{clean_session[0..50]}...")
+        else
+          UI.error("❌ Could not extract myacinfo from FASTLANE_SESSION")
+          clean_session = ""
+        end
         
         # Try standard App Store Connect API instead of iris
         response = sh("curl -s -w '%{http_code}' -X GET 'https://api.appstoreconnect.apple.com/v1/apps/#{app_id}' \
