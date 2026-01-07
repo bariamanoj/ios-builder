@@ -79,29 +79,26 @@ platform :ios do
           
           # Use the exact API call from manual setup with session authentication
           if v2_body.include?('"availableInNewTerritories" : false')
-            UI.message("🔄 Using exact manual setup API call with session authentication...")
+            UI.message("🔄 Using standard API v2 PATCH to enable worldwide availability...")
             
-            # Fixed payload with proper territory IDs (remove ${} syntax)
-            manual_payload = '{"data":{"type":"bulkUpdateAppAvailabilities","attributes":{"availableInNewTerritories":true},"relationships":{"app":{"data":{"type":"apps","id":"6753968771"}},"territoryAvailabilities":{"data":[{"type":"territoryAvailabilities","id":"eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJVU0EifQ=="},{"type":"territoryAvailabilities","id":"eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJHQlIifQ=="},{"type":"territoryAvailabilities","id":"eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJDQU4ifQ=="},{"type":"territoryAvailabilities","id":"eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJBVVMifQ=="},{"type":"territoryAvailabilities","id":"eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJERVUifQ=="},{"type":"territoryAvailabilities","id":"eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJGUkEifQ=="},{"type":"territoryAvailabilities","id":"eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJKUE4ifQ=="},{"type":"territoryAvailabilities","id":"eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJJTkQifQ=="}]}}}'
+            # Use standard API v2 endpoint with simple payload
+            patch_payload = '{"data":{"type":"appAvailabilities","id":"6753968771","attributes":{"availableInNewTerritories":true}}}'
             
-            # Use session authentication (Cookie header) as captured from manual setup
-            manual_response = sh("curl -s -w '%{http_code}' -X POST 'https://appstoreconnect.apple.com/iris/v1/bulkUpdateAppAvailabilities' \
+            # Try standard API v2 PATCH first
+            patch_response = sh("curl -s -w '%{http_code}' -X PATCH 'https://api.appstoreconnect.apple.com/v2/appAvailabilities/6753968771' \
+              -H 'Authorization: Bearer #{token}' \
               -H 'Content-Type: application/json' \
-              -H 'Accept: application/json' \
-              -H 'Cookie: myacinfo=#{clean_session}' \
-              -H 'X-Requested-With: XMLHttpRequest' \
-              -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' \
-              -d '#{manual_payload}'", capture_output: true)
+              -d '#{patch_payload}'", capture_output: true)
             
-            manual_status = manual_response.split("\n").last.gsub(/[^0-9]/, '')
-            manual_body = manual_response.split("\n")[0..-2].join("\n")
+            patch_status = patch_response.split("\n").last.gsub(/[^0-9]/, '')
+            patch_body = patch_response.split("\n")[0..-2].join("\n")
             
-            UI.message("📊 Manual API Response: #{manual_status}")
+            UI.message("📊 PATCH API Response: #{patch_status}")
             
-            if manual_status.to_i >= 200 && manual_status.to_i < 300
-              UI.success("🎉 Successfully enabled worldwide availability using manual API!")
+            if patch_status.to_i >= 200 && patch_status.to_i < 300
+              UI.success("🎉 Successfully enabled worldwide availability using standard API!")
             else
-              UI.message("📊 Manual API failed: #{manual_status} - #{manual_body}")
+              UI.message("📊 PATCH failed: #{patch_status} - #{patch_body}")
             end
           else
             UI.success("✅ App is already available in new territories!")
