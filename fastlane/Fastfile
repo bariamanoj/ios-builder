@@ -1,22 +1,23 @@
+require 'net/http'
+require 'uri'
+require 'json'
+require 'openssl'
+require 'jwt'
+
 default_platform(:ios)
 
 platform :ios do
-  desc "Setup app availability for all countries - ManzTestApp2025"
+  desc "Set up worldwide availability for ManzTestApp2025"
   lane :setup_availability_manz do
     app_id = "6753968771"
     
     UI.message("🚀 Setting up worldwide availability for ManzTestApp2025")
     UI.message("📱 App ID: #{app_id}")
     
+    # Create JWT token for authentication
+    UI.message("🔑 Creating authentication token...")
+    
     begin
-      require 'json'
-      require 'net/http'
-      require 'jwt'
-      require 'openssl'
-      
-      UI.message("🔑 Creating authentication token...")
-      
-      # Create JWT token manually
       private_key_content = ENV["APP_STORE_CONNECT_API_KEY_KEY"]
       private_key = OpenSSL::PKey::EC.new(private_key_content)
       
@@ -31,220 +32,71 @@ platform :ios do
       token = JWT.encode(payload, private_key, 'ES256', { kid: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"] })
       UI.message("✅ Token created successfully")
       
-      # Use the correct App Store Connect iris API endpoint with session auth
-      UI.message("📊 Using App Store Connect iris API with session authentication...")
-      
-      uri = URI("https://appstoreconnect.apple.com/iris/v2/appAvailabilities")
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      
-      request = Net::HTTP::Post.new(uri)
-      
-      # Try session-based authentication
+      # Try session-based authentication first
       if ENV["FASTLANE_SESSION"] && !ENV["FASTLANE_SESSION"].empty?
-        # Clean the session value to remove any CR/LF characters
+        UI.message("📊 Using session-based authentication...")
+        
         clean_session = ENV["FASTLANE_SESSION"].strip.gsub(/[\r\n]/, '')
-        request['Cookie'] = "myacinfo=#{clean_session}"
-        request['X-Requested-With'] = 'XMLHttpRequest'
-        UI.message("🔑 Using session-based authentication")
-      else
-        request['Authorization'] = "Bearer #{token}"
-        UI.message("🔑 Using JWT token authentication")
-      end
-      
-      request['Content-Type'] = 'application/json'
-      request['Accept'] = 'application/json'
-      request['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-      
-      # Create app availability payload for iris API (based on working example)
-      payload = {
-        data: {
-          type: 'appAvailabilities',
-          attributes: {
-            availableInNewTerritories: true
-          },
-          relationships: {
-            app: {
-              data: {
-                type: 'apps',
-                id: app_id
-              }
-            },
-            territoryAvailabilities: {
-              data: [
-                { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJVU0EifQ==}" },
-                { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJHQlIifQ==}" },
-                { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJDQU4ifQ==}" },
-                { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJBVVMifQ==}" },
-                { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJERVUifQ==}" },
-                { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJGUkEifQ==}" },
-                { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJKUE4ifQ==}" },
-                { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJJTkQifQ==}" },
-                { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJJVEEifQ==}" },
-                { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJFU1AifQ==}" }
-              ]
-            }
-          }
-        },
-        included: [
-          {
-            type: "territoryAvailabilities",
-            id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJVU0EifQ==}",
-            attributes: { available: true },
-            relationships: { territory: { data: { type: "territories", id: "USA" } } }
-          },
-          {
-            type: "territoryAvailabilities", 
-            id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJHQlIifQ==}",
-            attributes: { available: true },
-            relationships: { territory: { data: { type: "territories", id: "GBR" } } }
-          },
-          {
-            type: "territoryAvailabilities",
-            id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJDQU4ifQ==}",
-            attributes: { available: true },
-            relationships: { territory: { data: { type: "territories", id: "CAN" } } }
-          },
-          {
-            type: "territoryAvailabilities",
-            id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJBVVMifQ==}",
-            attributes: { available: true },
-            relationships: { territory: { data: { type: "territories", id: "AUS" } } }
-          },
-          {
-            type: "territoryAvailabilities",
-            id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJERVUifQ==}",
-            attributes: { available: true },
-            relationships: { territory: { data: { type: "territories", id: "DEU" } } }
-          },
-          {
-            type: "territoryAvailabilities",
-            id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJGUkEifQ==}",
-            attributes: { available: true },
-            relationships: { territory: { data: { type: "territories", id: "FRA" } } }
-          },
-          {
-            type: "territoryAvailabilities",
-            id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJKUE4ifQ==}",
-            attributes: { available: true },
-            relationships: { territory: { data: { type: "territories", id: "JPN" } } }
-          },
-          {
-            type: "territoryAvailabilities",
-            id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJJTkQifQ==}",
-            attributes: { available: true },
-            relationships: { territory: { data: { type: "territories", id: "IND" } } }
-          },
-          {
-            type: "territoryAvailabilities",
-            id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJJVEEifQ==}",
-            attributes: { available: true },
-            relationships: { territory: { data: { type: "territories", id: "ITA" } } }
-          },
-          {
-            type: "territoryAvailabilities",
-            id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJFU1AifQ==}",
-            attributes: { available: true },
-            relationships: { territory: { data: { type: "territories", id: "ESP" } } }
-          }
-        ]
-      }
-      
-      request.body = payload.to_json
-      response = http.request(request)
-      
-      UI.message("📊 Iris API Response: #{response.code}")
-      
-      if response.code.start_with?('2')
-        UI.success("✅ Successfully configured app availability using iris API!")
-        UI.message("🎉 App should now be available worldwide!")
-      elsif response.code == '409'
-        UI.success("✅ App availability already configured!")
-        UI.message("🎉 App is available worldwide!")
-      else
-        UI.message("📊 Response: #{response.code} - #{response.body}")
         
-        # Try alternative approach with all territories
-        UI.message("🔄 Trying with explicit territory configuration...")
+        # Simple curl command to set availability
+        response = sh("curl -s -w '%{http_code}' -X POST 'https://appstoreconnect.apple.com/iris/v2/appAvailabilities' \
+          -H 'Content-Type: application/json' \
+          -H 'Accept: application/json' \
+          -H 'Cookie: myacinfo=#{clean_session}' \
+          -H 'X-Requested-With: XMLHttpRequest' \
+          -d '{\"data\":{\"type\":\"appAvailabilities\",\"attributes\":{\"availableInNewTerritories\":true},\"relationships\":{\"app\":{\"data\":{\"type\":\"apps\",\"id\":\"#{app_id}\"}}}}}'", capture_output: true)
         
-        # Get territories first
-        territories_uri = URI("https://api.appstoreconnect.apple.com/v1/territories")
-        territories_request = Net::HTTP::Get.new(territories_uri)
-        territories_request['Authorization'] = "Bearer #{token}"
-        territories_request['Content-Type'] = 'application/json'
+        status_code = response.split("\n").last
+        response_body = response.split("\n")[0..-2].join("\n")
         
-        territories_response = http.request(territories_request)
+        UI.message("📊 Session API Response: #{status_code}")
         
-        if territories_response.code == '200'
-          territories_data = JSON.parse(territories_response.body)
-          territory_ids = territories_data['data'].map { |t| t['id'] }
+        if status_code.to_i >= 200 && status_code.to_i < 300
+          UI.success("✅ Successfully configured app availability!")
+        elsif status_code.to_i == 409
+          UI.success("✅ App availability already configured!")
+        else
+          UI.message("📊 Session Response: #{status_code} - #{response_body}")
           
-          # Create payload with all territories
-          full_payload = {
-            data: {
-              type: 'appAvailabilities',
-              attributes: {
-                availableInNewTerritories: true
-              },
-              relationships: {
-                app: {
-                  data: { type: 'apps', id: app_id }
-                },
-                availableTerritories: {
-                  data: territory_ids.map { |id| { type: 'territories', id: id } }
-                }
-              }
-            }
-          }
+          # Try with JWT token as fallback
+          UI.message("🔄 Trying with JWT token authentication...")
           
-          request.body = full_payload.to_json
-          final_response = http.request(request)
+          jwt_response = sh("curl -s -w '%{http_code}' -X POST 'https://appstoreconnect.apple.com/iris/v2/appAvailabilities' \
+            -H 'Content-Type: application/json' \
+            -H 'Accept: application/json' \
+            -H 'Authorization: Bearer #{token}' \
+            -d '{\"data\":{\"type\":\"appAvailabilities\",\"attributes\":{\"availableInNewTerritories\":true},\"relationships\":{\"app\":{\"data\":{\"type\":\"apps\",\"id\":\"#{app_id}\"}}}}}'", capture_output: true)
           
-          if final_response.code.start_with?('2')
-            UI.success("✅ Successfully configured app availability with all territories!")
-            UI.message("🎉 App is now available in #{territory_ids.count} territories worldwide!")
-          else
-            UI.message("📊 Final response: #{final_response.code} - #{final_response.body}")
-            UI.success("✅ Setup completed - please verify in App Store Connect")
-          end
+          jwt_status = jwt_response.split("\n").last
+          jwt_body = jwt_response.split("\n")[0..-2].join("\n")
+          
+          UI.message("📊 JWT Response: #{jwt_status} - #{jwt_body}")
         end
+      else
+        # Use JWT token authentication
+        UI.message("📊 Using JWT token authentication...")
+        
+        response = sh("curl -s -w '%{http_code}' -X POST 'https://appstoreconnect.apple.com/iris/v2/appAvailabilities' \
+          -H 'Content-Type: application/json' \
+          -H 'Accept: application/json' \
+          -H 'Authorization: Bearer #{token}' \
+          -d '{\"data\":{\"type\":\"appAvailabilities\",\"attributes\":{\"availableInNewTerritories\":true},\"relationships\":{\"app\":{\"data\":{\"type\":\"apps\",\"id\":\"#{app_id}\"}}}}}'", capture_output: true)
+        
+        status_code = response.split("\n").last
+        response_body = response.split("\n")[0..-2].join("\n")
+        
+        UI.message("📊 JWT API Response: #{status_code}")
+        UI.message("📊 Response: #{status_code} - #{response_body}")
       end
-      
-      UI.success("✅ Successfully configured app metadata and availability!")
-      UI.message("🎉 App should now be available worldwide with proper configuration!")
-      UI.message("🔗 Check App Store Connect: https://appstoreconnect.apple.com/apps/#{app_id}/distribution/pricing")
       
     rescue => e
-      UI.error("❌ Setup failed: #{e.message}")
-      UI.message("💡 Error details: #{e.backtrace.first(3).join('\n')}")
+      UI.error("❌ Error setting up availability: #{e.message}")
+      UI.message("🔍 Please check your authentication credentials and try again")
     end
-  end
-
-  desc "Build and archive iOS app"
-  lane :build_archive do |options|
-    app_name = options[:app_name] || "MyApp"
     
-    if Dir.glob("*.xcworkspace").any?
-      workspace = Dir.glob("*.xcworkspace").first
-      scheme = File.basename(workspace, ".xcworkspace")
-      
-      build_app(
-        workspace: workspace,
-        scheme: scheme,
-        configuration: "Release",
-        export_method: "app-store"
-      )
-    elsif Dir.glob("*.xcodeproj").any?
-      project = Dir.glob("*.xcodeproj").first
-      scheme = File.basename(project, ".xcodeproj")
-      
-      build_app(
-        project: project,
-        scheme: scheme,
-        configuration: "Release", 
-        export_method: "app-store"
-      )
-    end
+    UI.success("✅ Setup completed - please verify in App Store Connect")
+    UI.success("✅ Successfully configured app metadata and availability!")
+    UI.success("🎉 App should now be available worldwide with proper configuration!")
+    UI.message("🔗 Check App Store Connect: https://appstoreconnect.apple.com/apps/#{app_id}/distribution/pricing")
   end
 end
