@@ -73,8 +73,8 @@ platform :ios do
                   { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJVU0EifQ==}" },
                   { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJHQlIifQ==}" },
                   { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJDQU4ifQ==}" },
-                  { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOaJBVVMifQ==}" },
-                  { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOaJERVUifQ==}" }
+                  { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJBVVMifQ==}" },
+                  { type: "territoryAvailabilities", id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJERVUifQ==}" }
                 ]
               }
             }
@@ -82,31 +82,31 @@ platform :ios do
           included: [
             {
               type: "territoryAvailabilities",
-              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOaJVU0EifQ==}",
+              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJVU0EifQ==}",
               attributes: { available: true },
               relationships: { territory: { data: { type: "territories", id: "USA" } } }
             },
             {
               type: "territoryAvailabilities",
-              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOaJHQlIifQ==}",
+              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJHQlIifQ==}",
               attributes: { available: true },
               relationships: { territory: { data: { type: "territories", id: "GBR" } } }
             },
             {
               type: "territoryAvailabilities",
-              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOaJDQU4ifQ==}",
+              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJDQU4ifQ==}",
               attributes: { available: true },
               relationships: { territory: { data: { type: "territories", id: "CAN" } } }
             },
             {
               type: "territoryAvailabilities",
-              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOaJBVVMifQ==}",
+              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJBVVMifQ==}",
               attributes: { available: true },
               relationships: { territory: { data: { type: "territories", id: "AUS" } } }
             },
             {
               type: "territoryAvailabilities",
-              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOaJERVUifQ==}",
+              id: "${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJERVUifQ==}",
               attributes: { available: true },
               relationships: { territory: { data: { type: "territories", id: "DEU" } } }
             }
@@ -118,6 +118,7 @@ platform :ios do
           -H 'Accept: application/json' \
           -H 'Cookie: myacinfo=#{clean_session}' \
           -H 'X-Requested-With: XMLHttpRequest' \
+          -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' \
           -d '#{bulk_payload.to_json}'", capture_output: true)
         
         bulk_status = bulk_response.split("\n").last
