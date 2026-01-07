@@ -38,49 +38,36 @@ platform :ios do
         
         clean_session = ENV["FASTLANE_SESSION"].strip.gsub(/[\r\n]/, '')
         
-        # Simple curl command to set availability
-        response = sh("curl -s -w '%{http_code}' -X POST 'https://appstoreconnect.apple.com/iris/v2/appAvailabilities' \
-          -H 'Content-Type: application/json' \
-          -H 'Accept: application/json' \
-          -H 'Cookie: myacinfo=#{clean_session}' \
-          -H 'X-Requested-With: XMLHttpRequest' \
-          -d '{\"data\":{\"type\":\"appAvailabilities\",\"attributes\":{\"availableInNewTerritories\":true},\"relationships\":{\"app\":{\"data\":{\"type\":\"apps\",\"id\":\"#{app_id}\"}}}}}'", capture_output: true)
+        # Try standard App Store Connect API instead of iris
+        response = sh("curl -s -w '%{http_code}' -X GET 'https://api.appstoreconnect.apple.com/v1/apps/#{app_id}' \
+          -H 'Authorization: Bearer #{token}' \
+          -H 'Content-Type: application/json'", capture_output: true)
         
         status_code = response.split("\n").last
         response_body = response.split("\n")[0..-2].join("\n")
         
-        UI.message("📊 Session API Response: #{status_code}")
+        UI.message("📊 Standard API Response: #{status_code}")
         
         if status_code.to_i >= 200 && status_code.to_i < 300
-          UI.success("✅ Successfully configured app availability!")
-        elsif status_code.to_i == 409
-          UI.success("✅ App availability already configured!")
-        else
-          UI.message("📊 Session Response: #{status_code} - #{response_body}")
+          UI.success("✅ App found - trying to set availability via standard API")
           
-          # Try with JWT token as fallback
-          UI.message("🔄 Trying with JWT token authentication...")
-          
-          jwt_response = sh("curl -s -w '%{http_code}' -X POST 'https://appstoreconnect.apple.com/iris/v2/appAvailabilities' \
-            -H 'Content-Type: application/json' \
-            -H 'Accept: application/json' \
+          # Try to get app info and set availability through app info endpoint
+          app_info_response = sh("curl -s -w '%{http_code}' -X GET 'https://api.appstoreconnect.apple.com/v1/apps/#{app_id}/appInfos' \
             -H 'Authorization: Bearer #{token}' \
-            -d '{\"data\":{\"type\":\"appAvailabilities\",\"attributes\":{\"availableInNewTerritories\":true},\"relationships\":{\"app\":{\"data\":{\"type\":\"apps\",\"id\":\"#{app_id}\"}}}}}'", capture_output: true)
+            -H 'Content-Type: application/json'", capture_output: true)
           
-          jwt_status = jwt_response.split("\n").last
-          jwt_body = jwt_response.split("\n")[0..-2].join("\n")
+          UI.message("📊 App Info Response: #{app_info_response.split("\n").last}")
           
-          UI.message("📊 JWT Response: #{jwt_status} - #{jwt_body}")
+        else
+          UI.message("📊 Standard API failed: #{status_code} - #{response_body}")
         end
       else
-        # Use JWT token authentication
-        UI.message("📊 Using JWT token authentication...")
+        # Use JWT token authentication with standard API
+        UI.message("📊 Using JWT token authentication with standard API...")
         
-        response = sh("curl -s -w '%{http_code}' -X POST 'https://appstoreconnect.apple.com/iris/v2/appAvailabilities' \
-          -H 'Content-Type: application/json' \
-          -H 'Accept: application/json' \
+        response = sh("curl -s -w '%{http_code}' -X GET 'https://api.appstoreconnect.apple.com/v1/apps/#{app_id}' \
           -H 'Authorization: Bearer #{token}' \
-          -d '{\"data\":{\"type\":\"appAvailabilities\",\"attributes\":{\"availableInNewTerritories\":true},\"relationships\":{\"app\":{\"data\":{\"type\":\"apps\",\"id\":\"#{app_id}\"}}}}}'", capture_output: true)
+          -H 'Content-Type: application/json'", capture_output: true)
         
         status_code = response.split("\n").last
         response_body = response.split("\n")[0..-2].join("\n")
