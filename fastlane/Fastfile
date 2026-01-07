@@ -11,6 +11,9 @@ platform :ios do
     begin
       # Setup Spaceship authentication directly
       require 'spaceship'
+      require 'openssl'
+      
+      UI.message("🔑 Creating JWT token...")
       
       # Create API key token
       api_key = Spaceship::ConnectAPI::Token.create(
@@ -21,6 +24,7 @@ platform :ios do
       
       # Get the API token text directly
       token = api_key.text
+      UI.message("🔑 Token created successfully (length: #{token.length})")
       
       # Get app info using direct HTTP call
       require 'net/http'
