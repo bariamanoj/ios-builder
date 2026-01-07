@@ -79,26 +79,26 @@ platform :ios do
           
           # Use the exact API call from manual setup with session authentication
           if v2_body.include?('"availableInNewTerritories" : false')
-            UI.message("🔄 Using standard API v2 PATCH to enable worldwide availability...")
+            UI.message("🔄 Using CREATE approach for app availability...")
             
-            # Use standard API v2 endpoint with simple payload
-            patch_payload = '{"data":{"type":"appAvailabilities","id":"6753968771","attributes":{"availableInNewTerritories":true}}}'
+            # Use CREATE instead of PATCH as API only allows CREATE and GET_INSTANCE
+            create_payload = '{"data":{"type":"appAvailabilities","attributes":{"availableInNewTerritories":true},"relationships":{"app":{"data":{"type":"apps","id":"6753968771"}}}}}'
             
-            # Try standard API v2 PATCH first
-            patch_response = sh("curl -s -w '%{http_code}' -X PATCH 'https://api.appstoreconnect.apple.com/v2/appAvailabilities/6753968771' \
+            # Try CREATE new availability
+            create_response = sh("curl -s -w '%{http_code}' -X POST 'https://api.appstoreconnect.apple.com/v2/appAvailabilities' \
               -H 'Authorization: Bearer #{token}' \
               -H 'Content-Type: application/json' \
-              -d '#{patch_payload}'", capture_output: true)
+              -d '#{create_payload}'", capture_output: true)
             
-            patch_status = patch_response.split("\n").last.gsub(/[^0-9]/, '')
-            patch_body = patch_response.split("\n")[0..-2].join("\n")
+            create_status = create_response.split("\n").last.gsub(/[^0-9]/, '')
+            create_body = create_response.split("\n")[0..-2].join("\n")
             
-            UI.message("📊 PATCH API Response: #{patch_status}")
+            UI.message("📊 CREATE API Response: #{create_status}")
             
-            if patch_status.to_i >= 200 && patch_status.to_i < 300
-              UI.success("🎉 Successfully enabled worldwide availability using standard API!")
+            if create_status.to_i >= 200 && create_status.to_i < 300
+              UI.success("🎉 Successfully created worldwide availability!")
             else
-              UI.message("📊 PATCH failed: #{patch_status} - #{patch_body}")
+              UI.message("📊 CREATE failed: #{create_status} - #{create_body}")
             end
           else
             UI.success("✅ App is already available in new territories!")
