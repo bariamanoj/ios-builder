@@ -43,7 +43,7 @@ platform :ios do
           -H 'Authorization: Bearer #{token}' \
           -H 'Content-Type: application/json'", capture_output: true)
         
-        status_code = response.split("\n").last
+        status_code = response.split("\n").last.gsub(/[^0-9]/, '')
         response_body = response.split("\n")[0..-2].join("\n")
         
         UI.message("📊 Standard API Response: #{status_code}")
