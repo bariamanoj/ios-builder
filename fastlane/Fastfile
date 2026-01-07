@@ -9,22 +9,45 @@ platform :ios do
     UI.message("📱 App ID: #{app_id}")
     
     begin
-      # Try to setup API key if compatible
-      begin
-        app_store_connect_api_key(
-          key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
-          issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
-          key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
-        )
-        UI.message("✅ API key setup successful")
-      rescue => e
-        UI.message("⚠️ API key setup failed, using alternative auth: #{e.message}")
-      end
+      # Create app privacy details JSON file
+      privacy_details = [
+        {
+          "data_protections": [
+            "DATA_NOT_COLLECTED"
+          ]
+        }
+      ]
       
-      # Use Fastlane's deliver action to set up app availability
-      UI.message("📊 Using Fastlane deliver to configure app availability...")
+      # Write privacy details to file
+      File.write("app_privacy_details.json", JSON.pretty_generate(privacy_details))
+      UI.message("📋 Created app privacy details configuration")
       
+      # Upload app privacy details first
+      UI.message("🔒 Uploading app privacy details...")
+      upload_app_privacy_details_to_app_store(
+        username: "dohrasanket@gmail.com",
+        app_identifier: "com.san.mainAp",
+        json_path: "app_privacy_details.json"
+      )
+      UI.success("✅ App privacy details uploaded successfully!")
+      
+      # Use produce to ensure app is properly configured
+      UI.message("📱 Configuring app with produce...")
+      produce(
+        username: "dohrasanket@gmail.com",
+        app_identifier: "com.san.mainAp",
+        app_name: "ManzTestApp2025",
+        language: "en-US",
+        app_version: "1.0",
+        sku: "ManzTestApp2025",
+        skip_itc: false,
+        skip_devcenter: true
+      )
+      
+      # Use deliver to set up metadata and availability
+      UI.message("📊 Using deliver to configure app metadata and availability...")
       deliver(
+        username: "dohrasanket@gmail.com",
         app_identifier: "com.san.mainAp",
         skip_binary_upload: true,
         skip_screenshots: true,
@@ -35,54 +58,46 @@ platform :ios do
         automatic_release: false,
         skip_app_version_update: true,
         
-        # App metadata that triggers availability setup
+        # App metadata
         app_version: "1.0",
         copyright: "© 2025 ManzzPlusApp",
         primary_category: "UTILITIES",
         secondary_category: "PRODUCTIVITY",
         
-        # Pricing and availability
-        price_tier: 0, # Free
+        # Pricing - Free
+        price_tier: 0,
         
-        # Localized metadata for major territories
+        # Localized content for major territories
         name: {
           "en-US" => "ManzTestApp2025",
-          "en-GB" => "ManzTestApp2025",
+          "en-GB" => "ManzTestApp2025", 
           "de-DE" => "ManzTestApp2025",
           "fr-FR" => "ManzTestApp2025",
-          "ja" => "ManzTestApp2025",
-          "en-AU" => "ManzTestApp2025",
-          "en-CA" => "ManzTestApp2025"
+          "ja" => "ManzTestApp2025"
         },
         
         description: {
-          "en-US" => "ManzTestApp2025 - A comprehensive utility application designed to enhance your productivity and streamline your daily tasks.",
-          "en-GB" => "ManzTestApp2025 - A comprehensive utility application designed to enhance your productivity and streamline your daily tasks.",
-          "de-DE" => "ManzTestApp2025 - Eine umfassende Utility-Anwendung zur Steigerung Ihrer Produktivität.",
-          "fr-FR" => "ManzTestApp2025 - Une application utilitaire complète conçue pour améliorer votre productivité.",
-          "ja" => "ManzTestApp2025 - 生産性を向上させる包括的なユーティリティアプリケーション。",
-          "en-AU" => "ManzTestApp2025 - A comprehensive utility application designed to enhance your productivity and streamline your daily tasks.",
-          "en-CA" => "ManzTestApp2025 - A comprehensive utility application designed to enhance your productivity and streamline your daily tasks."
+          "en-US" => "ManzTestApp2025 - A comprehensive utility application designed to enhance your productivity and streamline your daily tasks with powerful tools and features.",
+          "en-GB" => "ManzTestApp2025 - A comprehensive utility application designed to enhance your productivity and streamline your daily tasks with powerful tools and features.",
+          "de-DE" => "ManzTestApp2025 - Eine umfassende Utility-Anwendung zur Steigerung Ihrer Produktivität und Optimierung Ihrer täglichen Aufgaben.",
+          "fr-FR" => "ManzTestApp2025 - Une application utilitaire complète conçue pour améliorer votre productivité et rationaliser vos tâches quotidiennes.",
+          "ja" => "ManzTestApp2025 - 生産性を向上させ、日常のタスクを効率化するための包括的なユーティリティアプリケーション。"
         },
         
         keywords: {
-          "en-US" => "utility,productivity,tools,manz,app",
-          "en-GB" => "utility,productivity,tools,manz,app",
-          "de-DE" => "dienstprogramm,produktivität,werkzeuge,manz,app",
-          "fr-FR" => "utilitaire,productivité,outils,manz,app",
-          "ja" => "ユーティリティ,生産性,ツール,manz,アプリ",
-          "en-AU" => "utility,productivity,tools,manz,app",
-          "en-CA" => "utility,productivity,tools,manz,app"
+          "en-US" => "utility,productivity,tools,manz,app,efficiency",
+          "en-GB" => "utility,productivity,tools,manz,app,efficiency",
+          "de-DE" => "dienstprogramm,produktivität,werkzeuge,manz,app,effizienz",
+          "fr-FR" => "utilitaire,productivité,outils,manz,app,efficacité", 
+          "ja" => "ユーティリティ,生産性,ツール,manz,アプリ,効率"
         },
         
         release_notes: {
-          "en-US" => "Initial release of ManzTestApp2025. Welcome to a new era of productivity!",
-          "en-GB" => "Initial release of ManzTestApp2025. Welcome to a new era of productivity!",
-          "de-DE" => "Erste Veröffentlichung von ManzTestApp2025. Willkommen in einer neuen Ära der Produktivität!",
-          "fr-FR" => "Version initiale de ManzTestApp2025. Bienvenue dans une nouvelle ère de productivité!",
-          "ja" => "ManzTestApp2025の初回リリース。新しい生産性の時代へようこそ！",
-          "en-AU" => "Initial release of ManzTestApp2025. Welcome to a new era of productivity!",
-          "en-CA" => "Initial release of ManzTestApp2025. Welcome to a new era of productivity!"
+          "en-US" => "Welcome to ManzTestApp2025! This initial release brings you powerful utility features to enhance your daily productivity. Get started with our comprehensive toolset designed for efficiency.",
+          "en-GB" => "Welcome to ManzTestApp2025! This initial release brings you powerful utility features to enhance your daily productivity. Get started with our comprehensive toolset designed for efficiency.",
+          "de-DE" => "Willkommen bei ManzTestApp2025! Diese erste Version bietet Ihnen leistungsstarke Utility-Funktionen zur Steigerung Ihrer täglichen Produktivität.",
+          "fr-FR" => "Bienvenue dans ManzTestApp2025! Cette version initiale vous apporte des fonctionnalités utilitaires puissantes pour améliorer votre productivité quotidienne.",
+          "ja" => "ManzTestApp2025へようこそ！この初回リリースでは、日常の生産性を向上させる強力なユーティリティ機能をお届けします。"
         },
         
         support_url: {
@@ -105,10 +120,10 @@ platform :ios do
           contact_phone: "+91 9265171259",
           demo_account_name: "",
           demo_account_password: "",
-          notes: "ManzTestApp2025 - Utility application for productivity enhancement. Free app available worldwide."
+          notes: "ManzTestApp2025 is a utility application designed for productivity enhancement. The app is free and intended for worldwide distribution. No special review requirements."
         },
         
-        # Submission information
+        # Submission information for export compliance
         submission_information: {
           export_compliance_platform: "ios",
           export_compliance_compliance_required: false,
@@ -122,22 +137,20 @@ platform :ios do
         }
       )
       
-      UI.success("✅ Successfully configured app metadata and availability using Fastlane deliver!")
-      UI.message("🎉 App should now be available worldwide with proper localization!")
+      UI.success("✅ Successfully configured app metadata and availability!")
+      UI.message("🎉 App should now be available worldwide with proper configuration!")
       UI.message("🔗 Check App Store Connect: https://appstoreconnect.apple.com/apps/#{app_id}/distribution/pricing")
       
     rescue => e
-      UI.error("❌ Availability setup failed: #{e.message}")
-      UI.message("💡 Please check App Store Connect manually")
+      UI.error("❌ Setup failed: #{e.message}")
+      UI.message("💡 Error details: #{e.backtrace.first(3).join('\n')}")
     end
   end
 
   desc "Build and archive iOS app"
   lane :build_archive do |options|
     app_name = options[:app_name] || "MyApp"
-    bundle_id = options[:bundle_id] || "com.example.app"
     
-    # Find project/workspace
     if Dir.glob("*.xcworkspace").any?
       workspace = Dir.glob("*.xcworkspace").first
       scheme = File.basename(workspace, ".xcworkspace")
@@ -146,10 +159,7 @@ platform :ios do
         workspace: workspace,
         scheme: scheme,
         configuration: "Release",
-        export_method: "app-store",
-        archive_path: "./build/#{scheme}.xcarchive",
-        output_directory: "./build/ipa",
-        output_name: "#{app_name}.ipa"
+        export_method: "app-store"
       )
     elsif Dir.glob("*.xcodeproj").any?
       project = Dir.glob("*.xcodeproj").first
@@ -158,18 +168,9 @@ platform :ios do
       build_app(
         project: project,
         scheme: scheme,
-        configuration: "Release",
-        export_method: "app-store",
-        archive_path: "./build/#{scheme}.xcarchive",
-        output_directory: "./build/ipa",
-        output_name: "#{app_name}.ipa"
+        configuration: "Release", 
+        export_method: "app-store"
       )
     end
-  end
-
-  desc "Complete build and upload process"
-  lane :build_and_upload do |options|
-    build_archive(options)
-    setup_availability_manz
   end
 end
