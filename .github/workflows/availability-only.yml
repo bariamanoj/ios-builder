@@ -24,9 +24,8 @@ jobs:
           
       - name: Setup App Store Connect API Key
         run: |
-          echo "${{ secrets.APP_STORE_CONNECT_API_KEY }}" > AuthKey_762ZATSHW9.p8
-        env:
-          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          # Key file already exists in repository
+          ls -la AuthKey_762ZATSHW9.p8
           
       - name: Setup App Availability
         run: |
@@ -38,7 +37,3 @@ jobs:
           
           # Run the availability setup lane
           bundle exec fastlane setup_availability_manz
-        env:
-          APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
-          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
-          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
