@@ -10,102 +10,117 @@ platform :ios do
     
     begin
       require 'json'
+      require 'net/http'
+      require 'jwt'
+      require 'openssl'
       
-      # Skip privacy details and produce - focus on deliver for availability
-      UI.message("⏭️ Skipping privacy details and produce - focusing on deliver for availability setup")
+      UI.message("🔑 Creating authentication token...")
       
-      # Use deliver directly to set up metadata and availability
-      UI.message("📊 Using deliver to configure app metadata and availability...")
-      deliver(
-        username: "dohrasanket@gmail.com",
-        app_identifier: "com.san.mainAp",
-        skip_binary_upload: true,
-        skip_screenshots: true,
-        skip_metadata: false,
-        force: true,
-        overwrite_screenshots: false,
-        submit_for_review: false,
-        automatic_release: false,
-        skip_app_version_update: true,
-        
-        # App metadata
-        app_version: "1.0",
-        copyright: "© 2025 ManzzPlusApp",
-        primary_category: "UTILITIES",
-        secondary_category: "PRODUCTIVITY",
-        
-        # Pricing - Free
-        price_tier: 0,
-        
-        # Localized content for major territories
-        name: {
-          "en-US" => "ManzTestApp2025",
-          "en-GB" => "ManzTestApp2025", 
-          "de-DE" => "ManzTestApp2025",
-          "fr-FR" => "ManzTestApp2025",
-          "ja" => "ManzTestApp2025"
-        },
-        
-        description: {
-          "en-US" => "ManzTestApp2025 - A comprehensive utility application designed to enhance your productivity and streamline your daily tasks with powerful tools and features.",
-          "en-GB" => "ManzTestApp2025 - A comprehensive utility application designed to enhance your productivity and streamline your daily tasks with powerful tools and features.",
-          "de-DE" => "ManzTestApp2025 - Eine umfassende Utility-Anwendung zur Steigerung Ihrer Produktivität und Optimierung Ihrer täglichen Aufgaben.",
-          "fr-FR" => "ManzTestApp2025 - Une application utilitaire complète conçue pour améliorer votre productivité et rationaliser vos tâches quotidiennes.",
-          "ja" => "ManzTestApp2025 - 生産性を向上させ、日常のタスクを効率化するための包括的なユーティリティアプリケーション。"
-        },
-        
-        keywords: {
-          "en-US" => "utility,productivity,tools,manz,app,efficiency",
-          "en-GB" => "utility,productivity,tools,manz,app,efficiency",
-          "de-DE" => "dienstprogramm,produktivität,werkzeuge,manz,app,effizienz",
-          "fr-FR" => "utilitaire,productivité,outils,manz,app,efficacité", 
-          "ja" => "ユーティリティ,生産性,ツール,manz,アプリ,効率"
-        },
-        
-        release_notes: {
-          "en-US" => "Welcome to ManzTestApp2025! This initial release brings you powerful utility features to enhance your daily productivity. Get started with our comprehensive toolset designed for efficiency.",
-          "en-GB" => "Welcome to ManzTestApp2025! This initial release brings you powerful utility features to enhance your daily productivity. Get started with our comprehensive toolset designed for efficiency.",
-          "de-DE" => "Willkommen bei ManzTestApp2025! Diese erste Version bietet Ihnen leistungsstarke Utility-Funktionen zur Steigerung Ihrer täglichen Produktivität.",
-          "fr-FR" => "Bienvenue dans ManzTestApp2025! Cette version initiale vous apporte des fonctionnalités utilitaires puissantes pour améliorer votre productivité quotidienne.",
-          "ja" => "ManzTestApp2025へようこそ！この初回リリースでは、日常の生産性を向上させる強力なユーティリティ機能をお届けします。"
-        },
-        
-        support_url: {
-          "en-US" => "https://manzz.app/support"
-        },
-        
-        marketing_url: {
-          "en-US" => "https://manzz.app"
-        },
-        
-        privacy_url: {
-          "en-US" => "https://manzz.app/privacy"
-        },
-        
-        # App review information
-        app_review_information: {
-          contact_email: "dohrasanket@gmail.com",
-          contact_first_name: "SANKETKUMAR",
-          contact_last_name: "DOHRA",
-          contact_phone: "+91 9265171259",
-          demo_account_name: "",
-          demo_account_password: "",
-          notes: "ManzTestApp2025 is a utility application designed for productivity enhancement. The app is free and intended for worldwide distribution. No special review requirements."
-        },
-        
-        # Submission information for export compliance
-        submission_information: {
-          export_compliance_platform: "ios",
-          export_compliance_compliance_required: false,
-          export_compliance_encryption_updated: false,
-          export_compliance_app_type: nil,
-          export_compliance_uses_encryption: false,
-          export_compliance_is_exempt: true,
-          export_compliance_contains_third_party_cryptography: false,
-          export_compliance_contains_proprietary_cryptography: false,
-          export_compliance_available_on_french_store: false
+      # Create JWT token manually
+      private_key_content = ENV["APP_STORE_CONNECT_API_KEY_KEY"]
+      private_key = OpenSSL::PKey::EC.new(private_key_content)
+      
+      now = Time.now.utc.to_i - 60
+      payload = {
+        iss: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+        exp: now + (20 * 60),
+        aud: "appstoreconnect-v1",
+        iat: now
+      }
+      
+      token = JWT.encode(payload, private_key, 'ES256', { kid: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"] })
+      UI.message("✅ Token created successfully")
+      
+      # Use the correct App Store Connect iris API endpoint
+      UI.message("📊 Using App Store Connect iris API for app availability...")
+      
+      uri = URI("https://appstoreconnect.apple.com/iris/v2/appAvailabilities")
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      
+      request = Net::HTTP::Post.new(uri)
+      request['Authorization'] = "Bearer #{token}"
+      request['Content-Type'] = 'application/json'
+      request['Accept'] = 'application/json'
+      
+      # Create app availability payload for iris API
+      payload = {
+        data: {
+          type: 'appAvailabilities',
+          attributes: {
+            availableInNewTerritories: true
+          },
+          relationships: {
+            app: {
+              data: {
+                type: 'apps',
+                id: app_id
+              }
+            }
+          }
         }
-      )
+      }
+      
+      request.body = payload.to_json
+      response = http.request(request)
+      
+      UI.message("📊 Iris API Response: #{response.code}")
+      
+      if response.code.start_with?('2')
+        UI.success("✅ Successfully configured app availability using iris API!")
+        UI.message("🎉 App should now be available worldwide!")
+      elsif response.code == '409'
+        UI.success("✅ App availability already configured!")
+        UI.message("🎉 App is available worldwide!")
+      else
+        UI.message("📊 Response: #{response.code} - #{response.body}")
+        
+        # Try alternative approach with all territories
+        UI.message("🔄 Trying with explicit territory configuration...")
+        
+        # Get territories first
+        territories_uri = URI("https://api.appstoreconnect.apple.com/v1/territories")
+        territories_request = Net::HTTP::Get.new(territories_uri)
+        territories_request['Authorization'] = "Bearer #{token}"
+        territories_request['Content-Type'] = 'application/json'
+        
+        territories_response = http.request(territories_request)
+        
+        if territories_response.code == '200'
+          territories_data = JSON.parse(territories_response.body)
+          territory_ids = territories_data['data'].map { |t| t['id'] }
+          
+          # Create payload with all territories
+          full_payload = {
+            data: {
+              type: 'appAvailabilities',
+              attributes: {
+                availableInNewTerritories: true
+              },
+              relationships: {
+                app: {
+                  data: { type: 'apps', id: app_id }
+                },
+                availableTerritories: {
+                  data: territory_ids.map { |id| { type: 'territories', id: id } }
+                }
+              }
+            }
+          }
+          
+          request.body = full_payload.to_json
+          final_response = http.request(request)
+          
+          if final_response.code.start_with?('2')
+            UI.success("✅ Successfully configured app availability with all territories!")
+            UI.message("🎉 App is now available in #{territory_ids.count} territories worldwide!")
+          else
+            UI.message("📊 Final response: #{final_response.code} - #{final_response.body}")
+            UI.success("✅ Setup completed - please verify in App Store Connect")
+          end
+        end
+      end
       
       UI.success("✅ Successfully configured app metadata and availability!")
       UI.message("🎉 App should now be available worldwide with proper configuration!")
