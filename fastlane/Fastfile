@@ -11,29 +11,8 @@ platform :ios do
     begin
       require 'json'
       
-      # Create app privacy details JSON file in fastlane directory
-      privacy_details = [
-        {
-          "data_protections": [
-            "DATA_NOT_COLLECTED"
-          ]
-        }
-      ]
-      
-      # Ensure fastlane directory exists and write privacy details
-      Dir.mkdir("fastlane") unless Dir.exist?("fastlane")
-      privacy_file_path = "fastlane/app_privacy_details.json"
-      File.write(privacy_file_path, JSON.pretty_generate(privacy_details))
-      UI.message("📋 Created app privacy details at #{privacy_file_path}")
-      
-      # Upload app privacy details first
-      UI.message("🔒 Uploading app privacy details...")
-      upload_app_privacy_details_to_app_store(
-        username: "dohrasanket@gmail.com",
-        app_identifier: "com.san.mainAp",
-        json_path: privacy_file_path
-      )
-      UI.success("✅ App privacy details uploaded successfully!")
+      # Skip privacy details for now and focus on availability
+      UI.message("⏭️ Skipping privacy details upload - focusing on availability setup")
       
       # Use produce to ensure app is properly configured
       UI.message("📱 Configuring app with produce...")
