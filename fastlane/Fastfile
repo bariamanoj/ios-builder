@@ -71,9 +71,8 @@ platform :ios do
           if v2_body.include?('"availableInNewTerritories" : false')
             UI.message("🔄 Using exact manual setup API call with session authentication...")
             
-            # Read the complete payload from the file
-            payload_file = File.read('/Users/manzz/Desktop/update_app_avaibility_api.txt')
-            payload_json = payload_file.split("\n")[3..-1].join("\n").strip
+            # Exact payload from manual setup (key territories)
+            manual_payload = '{"data":{"type":"bulkUpdateAppAvailabilities","attributes":{"availableInNewTerritories":true},"relationships":{"app":{"data":{"type":"apps","id":"6753968771"}},"territoryAvailabilities":{"data":[{"type":"territoryAvailabilities","id":"${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJVU0EifQ==}"},{"type":"territoryAvailabilities","id":"${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJHQlIifQ==}"},{"type":"territoryAvailabilities","id":"${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJDQU4ifQ==}"},{"type":"territoryAvailabilities","id":"${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJBVVMifQ==}"},{"type":"territoryAvailabilities","id":"${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJERVUifQ==}"},{"type":"territoryAvailabilities","id":"${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJGUkEifQ==}"},{"type":"territoryAvailabilities","id":"${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJKUE4ifQ==}"},{"type":"territoryAvailabilities","id":"${eyJzIjoiNjc1Mzk2ODc3MSIsInQiOiJJTkQifQ==}"}]}}}'
             
             # Use session authentication (Cookie header) as captured from manual setup
             manual_response = sh("curl -s -w '%{http_code}' -X POST 'https://appstoreconnect.apple.com/iris/v1/bulkUpdateAppAvailabilities' \
@@ -82,7 +81,7 @@ platform :ios do
               -H 'Cookie: myacinfo=#{clean_session}' \
               -H 'X-Requested-With: XMLHttpRequest' \
               -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' \
-              -d '#{payload_json}'", capture_output: true)
+              -d '#{manual_payload}'", capture_output: true)
             
             manual_status = manual_response.split("\n").last.gsub(/[^0-9]/, '')
             manual_body = manual_response.split("\n")[0..-2].join("\n")
