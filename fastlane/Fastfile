@@ -51,12 +51,30 @@ platform :ios do
         if status_code.to_i >= 200 && status_code.to_i < 300
           UI.success("✅ App found - trying to set availability via standard API")
           
-          # Try to get app info and set availability through app info endpoint
-          app_info_response = sh("curl -s -w '%{http_code}' -X GET 'https://api.appstoreconnect.apple.com/v1/apps/#{app_id}/appInfos' \
+          # Try to get app availability using standard API
+          availability_response = sh("curl -s -w '%{http_code}' -X GET 'https://api.appstoreconnect.apple.com/v1/apps/#{app_id}/appAvailabilities' \
             -H 'Authorization: Bearer #{token}' \
             -H 'Content-Type: application/json'", capture_output: true)
           
-          UI.message("📊 App Info Response: #{app_info_response.split("\n").last}")
+          avail_status = availability_response.split("\n").last
+          avail_body = availability_response.split("\n")[0..-2].join("\n")
+          
+          UI.message("📊 Availability API Response: #{avail_status}")
+          
+          if avail_status.to_i >= 200 && avail_status.to_i < 300
+            UI.success("✅ Successfully retrieved app availability!")
+            UI.message("📊 Availability data: #{avail_body}")
+          else
+            UI.message("📊 Availability API failed: #{avail_status} - #{avail_body}")
+            
+            # Try territories endpoint
+            territories_response = sh("curl -s -w '%{http_code}' -X GET 'https://api.appstoreconnect.apple.com/v1/territories' \
+              -H 'Authorization: Bearer #{token}' \
+              -H 'Content-Type: application/json'", capture_output: true)
+            
+            terr_status = territories_response.split("\n").last
+            UI.message("📊 Territories API Response: #{terr_status}")
+          end
           
         else
           UI.message("📊 Standard API failed: #{status_code} - #{response_body}")
