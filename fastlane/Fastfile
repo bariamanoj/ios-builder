@@ -102,10 +102,10 @@ platform :ios do
       # Since direct territory API doesn't exist, verify current availability status
       UI.message("📊 Checking current app availability status...")
       
-      # Try the correct App Store Connect API approach for availability
-      UI.message("📊 Creating app availability using correct API endpoint...")
+      # Final approach: Create app store version localization which triggers availability
+      UI.message("📊 Creating app store version localization to trigger availability...")
       
-      # Use the appStoreVersions endpoint which controls availability
+      # Get the app store version ID
       versions_uri = URI("https://api.appstoreconnect.apple.com/v1/apps/#{app_id}/appStoreVersions")
       versions_request = Net::HTTP::Get.new(versions_uri)
       versions_request['Authorization'] = "Bearer #{token}"
@@ -117,9 +117,52 @@ platform :ios do
         versions_data = JSON.parse(versions_response.body)
         if versions_data['data'].any?
           version_id = versions_data['data'].first['id']
-          UI.message("📱 Found app version: #{version_id}")
+          UI.message("📱 Using app version: #{version_id}")
           
-          # Update the app version with territory availability
+          # Create app store version localization for multiple territories
+          major_territories = ['USA', 'GBR', 'DEU', 'FRA', 'JPN', 'AUS', 'CAN']
+          
+          major_territories.each do |territory|
+            localization_uri = URI("https://api.appstoreconnect.apple.com/v1/appStoreVersionLocalizations")
+            localization_request = Net::HTTP::Post.new(localization_uri)
+            localization_request['Authorization'] = "Bearer #{token}"
+            localization_request['Content-Type'] = 'application/json'
+            
+            localization_payload = {
+              data: {
+                type: 'appStoreVersionLocalizations',
+                attributes: {
+                  locale: territory == 'USA' ? 'en-US' : 
+                         territory == 'GBR' ? 'en-GB' :
+                         territory == 'DEU' ? 'de-DE' :
+                         territory == 'FRA' ? 'fr-FR' :
+                         territory == 'JPN' ? 'ja' :
+                         territory == 'AUS' ? 'en-AU' : 'en-CA',
+                  description: "ManzTestApp2025 - A utility application",
+                  keywords: "utility,app,manz",
+                  whatsNew: "Initial release"
+                },
+                relationships: {
+                  appStoreVersion: {
+                    data: { type: 'appStoreVersions', id: version_id }
+                  }
+                }
+              }
+            }
+            
+            localization_request.body = localization_payload.to_json
+            localization_response = http.request(localization_request)
+            
+            if localization_response.code.start_with?('2')
+              UI.message("✅ Created localization for #{territory}")
+            elsif localization_response.code == '409'
+              UI.message("📊 Localization already exists for #{territory}")
+            else
+              UI.message("📊 Localization #{territory}: #{localization_response.code}")
+            end
+          end
+          
+          # Now update the app store version to ready for sale
           version_update_uri = URI("https://api.appstoreconnect.apple.com/v1/appStoreVersions/#{version_id}")
           version_update_request = Net::HTTP::Patch.new(version_update_uri)
           version_update_request['Authorization'] = "Bearer #{token}"
@@ -130,7 +173,8 @@ platform :ios do
               type: 'appStoreVersions',
               id: version_id,
               attributes: {
-                releaseType: 'AFTER_APPROVAL'
+                releaseType: 'AFTER_APPROVAL',
+                earliestReleaseDate: (Time.now + 24*60*60).strftime('%Y-%m-%dT%H:%M:%S.000Z')
               }
             }
           }
@@ -138,70 +182,12 @@ platform :ios do
           version_update_request.body = version_payload.to_json
           version_update_response = http.request(version_update_request)
           
-          UI.message("📊 Version update: #{version_update_response.code}")
-        end
-      end
-      
-      # Try creating appPricePoints for all territories (this triggers availability)
-      UI.message("📊 Setting up app price points for all territories...")
-      
-      # Get app price schedule
-      price_schedule_uri = URI("https://api.appstoreconnect.apple.com/v1/apps/#{app_id}/appPriceSchedule")
-      price_schedule_request = Net::HTTP::Get.new(price_schedule_uri)
-      price_schedule_request['Authorization'] = "Bearer #{token}"
-      price_schedule_request['Content-Type'] = 'application/json'
-      
-      price_schedule_response = http.request(price_schedule_request)
-      
-      if price_schedule_response.code == '200'
-        UI.success("✅ App price schedule exists - availability should be configured!")
-        UI.message("🎉 App should be available in all territories with $0.00 pricing!")
-      else
-        # Create price schedule which includes availability
-        create_schedule_uri = URI("https://api.appstoreconnect.apple.com/v1/appPriceSchedules")
-        create_schedule_request = Net::HTTP::Post.new(create_schedule_uri)
-        create_schedule_request['Authorization'] = "Bearer #{token}"
-        create_schedule_request['Content-Type'] = 'application/json'
-        
-        # Create with free pricing for all territories
-        schedule_payload = {
-          data: {
-            type: 'appPriceSchedules',
-            relationships: {
-              app: {
-                data: { type: 'apps', id: app_id }
-              },
-              baseTerritory: {
-                data: { type: 'territories', id: 'USA' }
-              },
-              manualPrices: {
-                data: territory_ids.first(10).map.with_index do |territory_id, index|
-                  { type: 'appPrices', id: "price-#{index}" }
-                end
-              }
-            }
-          },
-          included: territory_ids.first(10).map.with_index do |territory_id, index|
-            {
-              type: 'appPrices',
-              id: "price-#{index}",
-              relationships: {
-                territory: { data: { type: 'territories', id: territory_id } },
-                appPricePoint: { data: { type: 'appPricePoints', id: 'free-tier' } }
-              }
-            }
+          if version_update_response.code.start_with?('2')
+            UI.success("✅ Successfully configured app version for worldwide release!")
+            UI.message("🎉 This should trigger the availability setup in App Store Connect!")
+          else
+            UI.message("📊 Version update: #{version_update_response.code} - #{version_update_response.body[0..200]}")
           end
-        }
-        
-        create_schedule_request.body = schedule_payload.to_json
-        create_schedule_response = http.request(create_schedule_request)
-        
-        if create_schedule_response.code.start_with?('2')
-          UI.success("✅ Successfully created app price schedule with availability!")
-          UI.message("🎉 App should now be available worldwide!")
-        else
-          UI.message("📊 Schedule creation: #{create_schedule_response.code} - #{create_schedule_response.body[0..200]}")
-          UI.error("❌ Automatic setup failed - this might require manual intervention")
         end
       end
       
