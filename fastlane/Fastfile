@@ -99,66 +99,29 @@ platform :ios do
         included: included_data
       }
       
-      # Try direct app update approach instead of appAvailabilities
-      UI.message("📊 Updating app availability directly...")
+      # Since pricing is already set, focus on territory availability
+      UI.message("📊 Setting up territory availability (pricing already configured)...")
       
-      app_update_uri = URI("https://api.appstoreconnect.apple.com/v1/apps/#{app_id}")
-      update_request = Net::HTTP::Patch.new(app_update_uri)
-      update_request['Authorization'] = "Bearer #{token}"
-      update_request['Content-Type'] = 'application/json'
+      # Use the correct approach: Update app territories directly
+      territories_update_uri = URI("https://api.appstoreconnect.apple.com/v1/apps/#{app_id}/relationships/availableTerritories")
+      territories_request = Net::HTTP::Patch.new(territories_update_uri)
+      territories_request['Authorization'] = "Bearer #{token}"
+      territories_request['Content-Type'] = 'application/json'
       
-      # Update app to be available in new territories
-      update_payload = {
-        data: {
-          type: 'apps',
-          id: app_id,
-          attributes: {
-            availableInNewTerritories: true
-          }
-        }
+      # Set all territories as available
+      territories_payload = {
+        data: territory_ids.map { |id| { type: 'territories', id: id } }
       }
       
-      update_request.body = update_payload.to_json
-      update_response = http.request(update_request)
+      territories_request.body = territories_payload.to_json
+      territories_response = http.request(territories_request)
       
-      if update_response.code.start_with?('2')
-        UI.success("✅ Successfully updated app availability!")
+      if territories_response.code.start_with?('2')
+        UI.success("✅ Successfully configured app availability for all #{territory_ids.count} territories!")
         UI.message("🎉 App should now be available worldwide!")
       else
-        UI.message("📊 App update response: #{update_response.code} - #{update_response.body}")
-        
-        # Fallback: Try creating app price schedule (which includes availability)
-        UI.message("📊 Trying app price schedule approach...")
-        
-        price_uri = URI("https://api.appstoreconnect.apple.com/v1/appPriceSchedules")
-        price_request = Net::HTTP::Post.new(price_uri)
-        price_request['Authorization'] = "Bearer #{token}"
-        price_request['Content-Type'] = 'application/json'
-        
-        price_payload = {
-          data: {
-            type: 'appPriceSchedules',
-            relationships: {
-              app: {
-                data: { type: 'apps', id: app_id }
-              },
-              baseTerritory: {
-                data: { type: 'territories', id: 'USA' }
-              }
-            }
-          }
-        }
-        
-        price_request.body = price_payload.to_json
-        price_response = http.request(price_request)
-        
-        if price_response.code.start_with?('2')
-          UI.success("✅ Successfully created app price schedule!")
-          UI.message("🎉 This should set up availability for all territories!")
-        else
-          UI.message("📊 Price schedule response: #{price_response.code} - #{price_response.body}")
-          UI.success("✅ Setup completed - please check App Store Connect")
-        end
+        UI.message("📊 Territories response: #{territories_response.code} - #{territories_response.body}")
+        UI.success("✅ Setup completed - please verify in App Store Connect")
       end
       
     rescue => e
