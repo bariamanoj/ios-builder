@@ -5,28 +5,34 @@ platform :ios do
   lane :setup_availability_manz do
     app_id = "6753968771"
     
-    # Setup API key
-    app_store_connect_api_key(
-      key_id: "762ZATSHW9",
-      issuer_id: "69a6de92-0f0b-47fc-a463-0b4e4b9f8a2a",
-      key_filepath: "./AuthKey_762ZATSHW9.p8"
-    )
-    
     UI.message("🚀 Setting up worldwide availability for ManzTestApp2025")
     UI.message("📱 App ID: #{app_id}")
     
-    # Get app info
-    app = Spaceship::ConnectAPI::App.get(app_id: app_id)
-    
-    if app.nil?
-      UI.error("❌ App not found with ID: #{app_id}")
-      next
-    end
-    
-    UI.message("📱 Found app: #{app.name}")
-    UI.message("🌍 Setting up worldwide availability...")
-    
     begin
+      # Setup Spaceship authentication directly
+      require 'spaceship'
+      
+      # Create API key token
+      api_key = Spaceship::ConnectAPI::Token.create(
+        key_id: "762ZATSHW9",
+        issuer_id: "69a6de92-0f0b-47fc-a463-0b4e4b9f8a2a",
+        filepath: "./AuthKey_762ZATSHW9.p8"
+      )
+      
+      # Set the token for Spaceship
+      Spaceship::ConnectAPI.token = api_key
+      
+      # Get app info
+      app = Spaceship::ConnectAPI::App.get(app_id: app_id)
+      
+      if app.nil?
+        UI.error("❌ App not found with ID: #{app_id}")
+        next
+      end
+      
+      UI.message("📱 Found app: #{app.name}")
+      UI.message("🌍 Setting up worldwide availability...")
+      
       # Get all territories
       territories = Spaceship::ConnectAPI::Territory.all
       territory_ids = territories.map(&:id)
@@ -38,8 +44,8 @@ platform :ios do
       require 'net/http'
       require 'json'
       
-      # Get the API token from Spaceship
-      token = Spaceship::ConnectAPI.token.text
+      # Get the API token text
+      token = api_key.text
       
       # Use the correct v2 endpoint
       uri = URI("https://api.appstoreconnect.apple.com/v2/appAvailabilities")
