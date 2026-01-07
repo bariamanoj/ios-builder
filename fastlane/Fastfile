@@ -19,38 +19,50 @@ platform :ios do
         filepath: "../AuthKey_762ZATSHW9.p8"
       )
       
-      # Set the token for Spaceship
-      Spaceship::ConnectAPI.token = api_key
+      # Get the API token text directly
+      token = api_key.text
       
-      # Get app info
-      app = Spaceship::ConnectAPI::App.get(app_id: app_id)
+      # Get app info using direct HTTP call
+      require 'net/http'
+      require 'json'
       
-      if app.nil?
+      # Get app details
+      app_uri = URI("https://api.appstoreconnect.apple.com/v1/apps/#{app_id}")
+      http = Net::HTTP.new(app_uri.host, app_uri.port)
+      http.use_ssl = true
+      
+      app_request = Net::HTTP::Get.new(app_uri)
+      app_request['Authorization'] = "Bearer #{token}"
+      app_request['Content-Type'] = 'application/json'
+      
+      app_response = http.request(app_request)
+      
+      if app_response.code != '200'
         UI.error("❌ App not found with ID: #{app_id}")
         next
       end
       
-      UI.message("📱 Found app: #{app.name}")
+      app_data = JSON.parse(app_response.body)
+      app_name = app_data['data']['attributes']['name']
+      
+      UI.message("📱 Found app: #{app_name}")
       UI.message("🌍 Setting up worldwide availability...")
       
       # Get all territories
-      territories = Spaceship::ConnectAPI::Territory.all
-      territory_ids = territories.map(&:id)
+      territories_uri = URI("https://api.appstoreconnect.apple.com/v1/territories")
+      territories_request = Net::HTTP::Get.new(territories_uri)
+      territories_request['Authorization'] = "Bearer #{token}"
+      territories_request['Content-Type'] = 'application/json'
+      
+      territories_response = http.request(territories_request)
+      territories_data = JSON.parse(territories_response.body)
+      territory_ids = territories_data['data'].map { |t| t['id'] }
+      
       UI.message("🌍 Found #{territory_ids.count} territories")
-      
       UI.message("📊 Creating app availability using App Store Connect API v2...")
-      
-      # Use direct API call to create app availability
-      require 'net/http'
-      require 'json'
-      
-      # Get the API token text
-      token = api_key.text
       
       # Use the correct v2 endpoint
       uri = URI("https://api.appstoreconnect.apple.com/v2/appAvailabilities")
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
       
       request = Net::HTTP::Post.new(uri)
       request['Authorization'] = "Bearer #{token}"
@@ -78,7 +90,7 @@ platform :ios do
           type: 'appAvailabilities',
           attributes: { availableInNewTerritories: true },
           relationships: {
-            app: { data: { type: 'apps', id: app.id } },
+            app: { data: { type: 'apps', id: app_id } },
             territoryAvailabilities: { data: territory_availabilities_data }
           }
         },
