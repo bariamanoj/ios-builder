@@ -5,106 +5,47 @@ platform :ios do
   lane :setup_availability_manz do
     app_id = "6753968771"
     
+    # Setup API key using environment variables
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
+    )
+    
     UI.message("🚀 Setting up worldwide availability for ManzTestApp2025")
     UI.message("📱 App ID: #{app_id}")
     
     begin
-      # Setup Spaceship authentication directly
-      require 'spaceship'
-      require 'openssl'
+      # Get app info using Spaceship
+      app = Spaceship::ConnectAPI::App.get(app_id: app_id)
       
-      UI.message("🔑 Creating JWT token...")
-      
-      # Create JWT token manually to ensure it's correct
-      require 'jwt'
-      
-      # Read the private key
-      key_path = "../AuthKey_762ZATSHW9.p8"
-      UI.message("🔍 Reading key file: #{key_path}")
-      
-      if !File.exist?(key_path)
-        UI.error("❌ Key file not found at: #{key_path}")
-        next
-      end
-      
-      private_key_content = File.read(key_path)
-      UI.message("🔍 Key file size: #{private_key_content.length} bytes")
-      UI.message("🔍 Key file starts with: #{private_key_content[0..50]}")
-      
-      private_key = OpenSSL::PKey::EC.new(private_key_content)
-      UI.message("🔍 Private key loaded successfully")
-      
-      # Create JWT payload
-      now = Time.now.to_i
-      payload = {
-        iss: "69a6de92-0f0b-47fc-a463-0b4e4b9f8a2a",
-        exp: now + (20 * 60), # 20 minutes
-        aud: "appstoreconnect-v1",
-        iat: now # issued at time
-      }
-      
-      UI.message("🔍 JWT payload: #{payload}")
-      UI.message("🔍 Current time: #{now}, Expires: #{payload[:exp]}")
-      
-      # Create JWT token
-      token = JWT.encode(payload, private_key, 'ES256', { kid: "762ZATSHW9" })
-      
-      UI.message("🔑 Token created successfully (length: #{token.length})")
-      
-      # Decode token to verify structure (for debugging)
-      begin
-        decoded = JWT.decode(token, nil, false) # Don't verify for debugging
-        UI.message("🔍 Token decoded successfully: #{decoded[0]}")
-        UI.message("🔍 Token header: #{decoded[1]}")
-      rescue => e
-        UI.error("❌ Token decode error: #{e.message}")
-      end
-      
-      # Get app info using direct HTTP call
-      require 'net/http'
-      require 'json'
-      
-      # Get app details
-      app_uri = URI("https://api.appstoreconnect.apple.com/v1/apps/#{app_id}")
-      http = Net::HTTP.new(app_uri.host, app_uri.port)
-      http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      
-      app_request = Net::HTTP::Get.new(app_uri)
-      app_request['Authorization'] = "Bearer #{token}"
-      app_request['Content-Type'] = 'application/json'
-      
-      app_response = http.request(app_request)
-      
-      UI.message("🔍 App API Response: #{app_response.code} - #{app_response.body[0..200]}")
-      
-      if app_response.code != '200'
+      if app.nil?
         UI.error("❌ App not found with ID: #{app_id}")
-        UI.error("Response: #{app_response.code} - #{app_response.body}")
         next
       end
       
-      app_data = JSON.parse(app_response.body)
-      app_name = app_data['data']['attributes']['name']
-      
-      UI.message("📱 Found app: #{app_name}")
+      UI.message("📱 Found app: #{app.name}")
       UI.message("🌍 Setting up worldwide availability...")
       
       # Get all territories
-      territories_uri = URI("https://api.appstoreconnect.apple.com/v1/territories")
-      territories_request = Net::HTTP::Get.new(territories_uri)
-      territories_request['Authorization'] = "Bearer #{token}"
-      territories_request['Content-Type'] = 'application/json'
-      
-      territories_response = http.request(territories_request)
-      territories_data = JSON.parse(territories_response.body)
-      territory_ids = territories_data['data'].map { |t| t['id'] }
-      
+      territories = Spaceship::ConnectAPI::Territory.all
+      territory_ids = territories.map(&:id)
       UI.message("🌍 Found #{territory_ids.count} territories")
+      
       UI.message("📊 Creating app availability using App Store Connect API v2...")
+      
+      # Use direct API call to create app availability
+      require 'net/http'
+      require 'json'
+      
+      # Get the API token from Spaceship
+      token = Spaceship::ConnectAPI.token.text
       
       # Use the correct v2 endpoint
       uri = URI("https://api.appstoreconnect.apple.com/v2/appAvailabilities")
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
       
       request = Net::HTTP::Post.new(uri)
       request['Authorization'] = "Bearer #{token}"
