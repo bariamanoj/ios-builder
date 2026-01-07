@@ -39,16 +39,26 @@ platform :ios do
       payload = {
         iss: "69a6de92-0f0b-47fc-a463-0b4e4b9f8a2a",
         exp: now + (20 * 60), # 20 minutes
-        aud: "appstoreconnect-v1"
+        aud: "appstoreconnect-v1",
+        iat: now # issued at time
       }
       
       UI.message("🔍 JWT payload: #{payload}")
+      UI.message("🔍 Current time: #{now}, Expires: #{payload[:exp]}")
       
       # Create JWT token
       token = JWT.encode(payload, private_key, 'ES256', { kid: "762ZATSHW9" })
       
       UI.message("🔑 Token created successfully (length: #{token.length})")
-      UI.message("🔍 Token starts with: #{token[0..50]}")
+      
+      # Decode token to verify structure (for debugging)
+      begin
+        decoded = JWT.decode(token, nil, false) # Don't verify for debugging
+        UI.message("🔍 Token decoded successfully: #{decoded[0]}")
+        UI.message("🔍 Token header: #{decoded[1]}")
+      rescue => e
+        UI.error("❌ Token decode error: #{e.message}")
+      end
       
       # Get app info using direct HTTP call
       require 'net/http'
