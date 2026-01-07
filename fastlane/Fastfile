@@ -97,11 +97,9 @@ platform :ios do
         else
           UI.message("📊 V2 failed: #{v2_status} - #{v2_body}")
         end
-          
-        else
-          UI.message("📊 Standard API failed: #{status_code} - #{response_body}")
-        end
       else
+        UI.message("📊 Standard API failed: #{status_code} - #{response_body}")
+        
         # Use JWT token authentication with standard API
         UI.message("📊 Using JWT token authentication with standard API...")
         
@@ -115,6 +113,9 @@ platform :ios do
         UI.message("📊 JWT API Response: #{status_code}")
         UI.message("📊 Response: #{status_code} - #{response_body}")
       end
+    else
+      UI.message("📊 No session token available, using JWT only")
+    end
       
     rescue => e
       UI.error("❌ Error setting up availability: #{e.message}")
