@@ -6,7 +6,6 @@ on:
       app_id:
         description: 'App Store Connect App ID'
         required: true
-        type: string
         default: '6753968771'
 
 jobs:
@@ -14,155 +13,32 @@ jobs:
     runs-on: macos-latest
     
     steps:
-    - name: Setup App Availability Worldwide
-      run: |
-        echo "🌍 Setting up worldwide app availability..."
-        echo "📱 App ID: ${{ github.event.inputs.app_id }}"
+      - name: Checkout code
+        uses: actions/checkout@v3
         
-        # Install fastlane
-        gem install fastlane --user-install
-        export PATH="$HOME/.local/share/gem/ruby/3.3.0/bin:$PATH"
-        
-        # Create fastlane directory and Fastfile
-        mkdir -p fastlane
-        cat > fastlane/Fastfile << 'EOF'
-        default_platform(:ios)
-        
-        platform :ios do
-          desc "Setup app availability worldwide"
-          lane :setup_availability do |options|
-            app_id = options[:app_id]
-            
-            # Setup API key
-            app_store_connect_api_key(
-              key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
-              issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
-              key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
-            )
-            
-            UI.message("🔍 Finding app with ID: #{app_id}")
-            
-            begin
-              # Get the app
-              app = Spaceship::ConnectAPI::App.get(app_id: app_id)
-              
-              if app.nil?
-                UI.error("❌ App not found with ID: #{app_id}")
-                next
-              end
-              
-              UI.message("📱 Found app: #{app.name}")
-              UI.message("🚀 Setting app to be available worldwide...")
-              
-              # Direct approach to set up app availability using the correct API
-              begin
-                UI.message("🔄 Setting up app availability directly...")
-                
-                # Get all territories
-                territories = Spaceship::ConnectAPI::Territory.all
-                territory_ids = territories.map(&:id)
-                UI.message("🌍 Found #{territory_ids.count} territories")
-                
-                # Use direct API call to create app availability
-                require 'net/http'
-                require 'json'
-                
-                # Get the API token from Spaceship
-                token = Spaceship::ConnectAPI.token.text
-                
-                # Create app availability with all territories
-                uri = URI("https://api.appstoreconnect.apple.com/v2/appAvailabilities")
-                http = Net::HTTP.new(uri.host, uri.port)
-                http.use_ssl = true
-                
-                request = Net::HTTP::Post.new(uri)
-                request['Authorization'] = "Bearer #{token}"
-                request['Content-Type'] = 'application/json'
-                
-                # Create availability payload with all territories using correct v2 format
-                payload = {
-                  data: {
-                    type: 'appAvailabilities',
-                    attributes: {
-                      availableInNewTerritories: true
-                    },
-                    relationships: {
-                      app: {
-                        data: { type: 'apps', id: app.id }
-                      },
-                      territoryAvailabilities: {
-                        data: territory_ids.map do |id| 
-                          { type: 'territoryAvailabilities', id: id }
-                        end
-                      }
-                    }
-                  },
-                  included: territory_ids.map do |id|
-                    {
-                      type: 'territoryAvailabilities',
-                      id: id,
-                      attributes: {
-                        available: true
-                      }
-                    }
-                  end
-                }
-                
-                request.body = payload.to_json
-                response = http.request(request)
-                
-                if response.code == '201'
-                  UI.success("✅ Successfully created app availability for all #{territory_ids.count} territories!")
-                  UI.message("🎉 Your app is now available worldwide!")
-                elsif response.code == '409'
-                  UI.message("📊 App availability already exists, this is expected")
-                  UI.success("✅ App should now be available in #{territory_ids.count} territories!")
-                else
-                  UI.error("❌ API call failed: #{response.code}")
-                  UI.message("Response: #{response.body}")
-                end
-                    {
-                      type: 'territoryAvailabilities',
-                      id: id,
-                      attributes: {
-                        available: true
-                      }
-                    }
-                  }
-                }
-                
-                request.body = payload.to_json
-                response = http.request(request)
-                
-                if response.code == '201'
-                  UI.success("✅ Successfully created app availability for all #{territory_ids.count} territories!")
-                  UI.message("🎉 Your app is now available worldwide!")
-                else
-                  UI.error("❌ API call failed: #{response.code}")
-                  UI.message("Response: #{response.body}")
-                  UI.message("💡 You'll need to click 'Set Up Availability' manually in App Store Connect")
-                end
-                
-              rescue => availability_error
-                UI.error("❌ Availability setup failed: #{availability_error.message}")
-                UI.message("💡 Manual setup required:")
-                UI.message("   1. Go to App Store Connect > ManzTestApp2025 > Pricing and Availability")
-                UI.message("   2. Click 'Set Up Availability' button")
-                UI.message("   3. Select 'All Countries and Regions'")
-                UI.message("   4. Click 'Save'")
-              end
-              
-            rescue => e
-              UI.error("❌ Error: #{e.message}")
-              UI.message("💡 This may require manual setup in App Store Connect")
-            end
-          end
-        end
-        EOF
-        
-        # Run fastlane with explicit lane
-        cd fastlane && fastlane setup_availability app_id:${{ github.event.inputs.app_id }}
-      env:
-        APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
-        APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
-        APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          bundler-cache: true
+          
+      - name: Setup App Store Connect API Key
+        run: |
+          echo "${{ secrets.APP_STORE_CONNECT_API_KEY }}" > AuthKey_762ZATSHW9.p8
+        env:
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          
+      - name: Setup App Availability
+        run: |
+          echo "🌍 Setting up worldwide app availability..."
+          echo "📱 App ID: ${{ github.event.inputs.app_id }}"
+          
+          # Install fastlane
+          gem install fastlane
+          
+          # Run the availability setup lane
+          bundle exec fastlane setup_availability_manz
+        env:
+          APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
