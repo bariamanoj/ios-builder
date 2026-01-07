@@ -38,8 +38,11 @@ platform :ios do
       
       app_response = http.request(app_request)
       
+      UI.message("🔍 App API Response: #{app_response.code} - #{app_response.body[0..200]}")
+      
       if app_response.code != '200'
         UI.error("❌ App not found with ID: #{app_id}")
+        UI.error("Response: #{app_response.code} - #{app_response.body}")
         next
       end
       
