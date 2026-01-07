@@ -16,7 +16,7 @@ platform :ios do
       api_key = Spaceship::ConnectAPI::Token.create(
         key_id: "762ZATSHW9",
         issuer_id: "69a6de92-0f0b-47fc-a463-0b4e4b9f8a2a",
-        filepath: "./AuthKey_762ZATSHW9.p8"
+        filepath: "AuthKey_762ZATSHW9.p8"
       )
       
       # Set the token for Spaceship
