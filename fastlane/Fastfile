@@ -69,39 +69,70 @@ platform :ios do
           
           # Check if availableInNewTerritories is false and create new availability
           if v2_body.include?('"availableInNewTerritories" : false')
-            UI.message("🔄 Creating new availability with worldwide access...")
+            UI.message("🔄 Getting territories for worldwide availability...")
             
-            create_payload = {
-              data: {
-                type: "appAvailabilities",
-                attributes: {
-                  availableInNewTerritories: true
-                },
-                relationships: {
-                  app: {
-                    data: {
-                      type: "apps",
-                      id: app_id
+            # Get all territories first
+            territories_response = sh("curl -s -w '%{http_code}' -X GET 'https://api.appstoreconnect.apple.com/v1/territories' \
+              -H 'Authorization: Bearer #{token}' \
+              -H 'Content-Type: application/json'", capture_output: true)
+            
+            terr_status = territories_response.split("\n").last.gsub(/[^0-9]/, '')
+            terr_body = territories_response.split("\n")[0..-2].join("\n")
+            
+            if terr_status.to_i >= 200 && terr_status.to_i < 300
+              UI.message("✅ Retrieved territories successfully")
+              
+              # Parse territories and create territory availabilities
+              territories_data = JSON.parse(terr_body)
+              territory_availabilities = territories_data['data'].map do |territory|
+                {
+                  type: "territoryAvailabilities",
+                  attributes: { available: true },
+                  relationships: {
+                    territory: {
+                      data: { type: "territories", id: territory['id'] }
+                    }
+                  }
+                }
+              end
+              
+              create_payload = {
+                data: {
+                  type: "appAvailabilities",
+                  attributes: {
+                    availableInNewTerritories: true
+                  },
+                  relationships: {
+                    app: {
+                      data: {
+                        type: "apps",
+                        id: app_id
+                      }
+                    },
+                    territoryAvailabilities: {
+                      data: territory_availabilities
                     }
                   }
                 }
               }
-            }
-            
-            create_response = sh("curl -s -w '%{http_code}' -X POST 'https://api.appstoreconnect.apple.com/v2/appAvailabilities' \
-              -H 'Authorization: Bearer #{token}' \
-              -H 'Content-Type: application/json' \
-              -d '#{create_payload.to_json}'", capture_output: true)
-            
-            create_status = create_response.split("\n").last.gsub(/[^0-9]/, '')
-            create_body = create_response.split("\n")[0..-2].join("\n")
-            
-            UI.message("📊 Create Response: #{create_status}")
-            
-            if create_status.to_i >= 200 && create_status.to_i < 300
-              UI.success("🎉 Successfully created worldwide availability!")
+              
+              create_response = sh("curl -s -w '%{http_code}' -X POST 'https://api.appstoreconnect.apple.com/v2/appAvailabilities' \
+                -H 'Authorization: Bearer #{token}' \
+                -H 'Content-Type: application/json' \
+                -d '#{create_payload.to_json}'", capture_output: true)
+              
+              create_status = create_response.split("\n").last.gsub(/[^0-9]/, '')
+              create_body = create_response.split("\n")[0..-2].join("\n")
+              
+              UI.message("📊 Create Response: #{create_status}")
+              
+              if create_status.to_i >= 200 && create_status.to_i < 300
+                UI.success("🎉 Successfully created worldwide availability!")
+              else
+                UI.message("📊 Create failed: #{create_status} - #{create_body}")
+              end
             else
-              UI.message("📊 Create failed: #{create_status} - #{create_body}")
+              UI.message("📊 Failed to get territories: #{terr_status}")
             end
           else
             UI.success("✅ App is already available in new territories!")
