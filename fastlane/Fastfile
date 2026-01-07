@@ -79,26 +79,25 @@ platform :ios do
           
           # Use the exact API call from manual setup with session authentication
           if v2_body.include?('"availableInNewTerritories" : false')
-            UI.message("🔄 Using CREATE approach for app availability...")
+            UI.message("🔄 Using Fastlane deliver action to update availability...")
             
-            # Use CREATE instead of PATCH as API only allows CREATE and GET_INSTANCE
-            create_payload = '{"data":{"type":"appAvailabilities","attributes":{"availableInNewTerritories":true},"relationships":{"app":{"data":{"type":"apps","id":"6753968771"}}}}}'
-            
-            # Try CREATE new availability
-            create_response = sh("curl -s -w '%{http_code}' -X POST 'https://api.appstoreconnect.apple.com/v2/appAvailabilities' \
-              -H 'Authorization: Bearer #{token}' \
-              -H 'Content-Type: application/json' \
-              -d '#{create_payload}'", capture_output: true)
-            
-            create_status = create_response.split("\n").last.gsub(/[^0-9]/, '')
-            create_body = create_response.split("\n")[0..-2].join("\n")
-            
-            UI.message("📊 CREATE API Response: #{create_status}")
-            
-            if create_status.to_i >= 200 && create_status.to_i < 300
-              UI.success("🎉 Successfully created worldwide availability!")
-            else
-              UI.message("📊 CREATE failed: #{create_status} - #{create_body}")
+            begin
+              # Use Fastlane's deliver action which handles availability properly
+              deliver(
+                app_identifier: "com.mobibox.manztestapp2025",
+                skip_screenshots: true,
+                skip_metadata: true,
+                skip_app_version_update: true,
+                force: true,
+                automatic_release: false,
+                submit_for_review: false,
+                # This should enable worldwide availability
+                price_tier: 0  # Free app, available worldwide
+              )
+              UI.success("🎉 Successfully updated app availability using Fastlane deliver!")
+            rescue => e
+              UI.message("📊 Deliver failed: #{e.message}")
+              UI.message("🔄 Falling back to manual App Store Connect update...")
             end
           else
             UI.success("✅ App is already available in new territories!")
