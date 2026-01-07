@@ -66,6 +66,39 @@ platform :ios do
         if v2_status.to_i >= 200 && v2_status.to_i < 300
           UI.success("✅ Successfully retrieved appAvailabilityV2!")
           UI.message("📊 V2 data: #{v2_body}")
+          
+          # Check if availableInNewTerritories is false and update it
+          if v2_body.include?('"availableInNewTerritories" : false')
+            UI.message("🔄 Setting availableInNewTerritories to true...")
+            
+            update_payload = {
+              data: {
+                type: "appAvailabilities",
+                id: app_id,
+                attributes: {
+                  availableInNewTerritories: true
+                }
+              }
+            }
+            
+            update_response = sh("curl -s -w '%{http_code}' -X PATCH 'https://api.appstoreconnect.apple.com/v2/appAvailabilities/#{app_id}' \
+              -H 'Authorization: Bearer #{token}' \
+              -H 'Content-Type: application/json' \
+              -d '#{update_payload.to_json}'", capture_output: true)
+            
+            update_status = update_response.split("\n").last.gsub(/[^0-9]/, '')
+            update_body = update_response.split("\n")[0..-2].join("\n")
+            
+            UI.message("📊 Update Response: #{update_status}")
+            
+            if update_status.to_i >= 200 && update_status.to_i < 300
+              UI.success("🎉 Successfully enabled worldwide availability!")
+            else
+              UI.message("📊 Update failed: #{update_status} - #{update_body}")
+            end
+          else
+            UI.success("✅ App is already available in new territories!")
+          end
         else
           UI.message("📊 V2 failed: #{v2_status} - #{v2_body}")
         end
