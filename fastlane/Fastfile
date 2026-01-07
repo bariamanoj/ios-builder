@@ -43,7 +43,9 @@ platform :ios do
       
       # Try session-based authentication
       if ENV["FASTLANE_SESSION"] && !ENV["FASTLANE_SESSION"].empty?
-        request['Cookie'] = "myacinfo=#{ENV['FASTLANE_SESSION']}"
+        # Clean the session value to remove any CR/LF characters
+        clean_session = ENV["FASTLANE_SESSION"].strip.gsub(/[\r\n]/, '')
+        request['Cookie'] = "myacinfo=#{clean_session}"
         request['X-Requested-With'] = 'XMLHttpRequest'
         UI.message("🔑 Using session-based authentication")
       else
