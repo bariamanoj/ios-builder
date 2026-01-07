@@ -9,7 +9,7 @@ platform :ios do
     app_store_connect_api_key(
       key_id: "762ZATSHW9",
       issuer_id: "69a6de92-0f0b-47fc-a463-0b4e4b9f8a2a",
-      key_filepath: "./AuthKey_762ZATSHW9.p8"
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
     )
     
     UI.message("🚀 Setting up worldwide availability for ManzTestApp2025")
